@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Филворд: английские слова</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8;
+    --grid:#D5E4EE;
+    --ink:#1F3A93;
+    --margin:#E0525A;
+    --text:#26303B;
+    --muted:#6B7785;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);
+    font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:1180px;margin:0 auto;padding:28px 20px 48px 56px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:36px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:56px;line-height:1;margin:0 0 6px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 22px;max-width:62ch}
+  .layout{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:start}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}.page{padding-left:48px}}
+
+  .board-wrap{background:#fff;border:2px solid var(--ink);padding:10px;box-shadow:6px 6px 0 var(--ink);width:max-content;max-width:100%}
+  .board{display:grid;gap:3px;touch-action:none;user-select:none}
+  .cell{
+    width:var(--cs);height:var(--cs);display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:calc(var(--cs)*.5);color:var(--text);
+    background:#F3F6F9;border-radius:4px;cursor:pointer;transition:background .12s,transform .12s;
+  }
+  .cell.sel{background:var(--ink);color:#fff;transform:scale(1.06)}
+  .cell.found{color:#1b1b1b}
+  .cell.flash{animation:flash .5s}
+  .cell.hint{outline:3px dashed var(--margin);outline-offset:-3px}
+  @keyframes flash{50%{background:var(--margin);color:#fff}}
+
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .stat{font-family:Caveat,cursive;font-size:30px;color:var(--ink);margin-right:10px}
+  button{
+    font:600 14px Manrope,sans-serif;padding:9px 14px;border:2px solid var(--ink);
+    background:#fff;color:var(--ink);cursor:pointer;border-radius:3px;
+  }
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible,.cell:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+
+  .current{min-height:34px;font-family:Caveat,cursive;font-size:30px;color:var(--ink);letter-spacing:2px;margin-bottom:8px}
+  .words{list-style:none;margin:0;padding:0;columns:2;column-gap:24px}
+  @media (max-width:520px){.words{columns:1}}
+  .words li{break-inside:avoid;padding:7px 0 7px 10px;border-left:4px solid transparent;margin-bottom:2px}
+  .words .ru{font-weight:600}
+  .words .en{display:block;font-size:13px;color:var(--muted);min-height:1em}
+  .words li.done .ru{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+  .words li.done .en{color:var(--text);font-weight:600}
+
+  .win{display:none;margin-top:18px;padding:14px 16px;border:2px dashed var(--margin);background:#fff}
+  .win.show{display:block}
+  .win b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  @media (prefers-reduced-motion:reduce){.cell{transition:none}.cell.flash{animation:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Филворд</h1>
+  <p class="sub">Найдите английское слово по русскому переводу. Проводите по буквам мышкой или пальцем: слово может поворачивать под прямым углом, но идёт только по соседним клеткам. Пробелы и дефисы в словах убраны.</p>
+
+  <div class="layout">
+    <div>
+      <div class="board-wrap"><div class="board" id="board"></div></div>
+    </div>
+    <div>
+      <div class="bar">
+        <span class="stat" id="score">0 / 0</span>
+        <span class="stat" id="timer">00:00</span>
+      </div>
+      <div class="bar">
+        <button id="newBtn">Новая игра</button>
+        <button id="hintBtn">Подсказка</button>
+        <label class="tog"><input type="checkbox" id="showEn"> Показывать английские слова</label>
+      </div>
+      <div class="current" id="current" aria-live="polite"></div>
+      <ul class="words" id="words"></ul>
+      <div class="win" id="win"><b>Все слова найдены!</b><span id="winText"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PAIRS = [
+  ["endure","терпеть"],
+  ["rescuers","спасатели"],
+  ["surgeon","хирург"],
+  ["stinks","воняет"],
+  ["vary","различаться"],
+  ["backs down","отступает"],
+  ["empathizes","сопереживает"],
+  ["willing to consider","готовы рассмотреть"],
+  ["looks out for","заботиться"],
+  ["the well-being","благополучие"],
+  ["honor","честь"],
+  ["dignity","достоинство"],
+  ["passionate","страстный"],
+  ["rely on","полагаться на"],
+  ["distinguish","различать"],
+  ["refined taste","изысканный вкус"],
+  ["neutralize","нейтрализовать"],
+  ["settle matters","улаживать вопросы"],
+  ["restrictions","ограничения"],
+  ["a wake","поминки"]
+];
+const COLORS = ["#FFE066","#B8F2A0","#9FD8FF","#FFB3C7","#D7B8FF","#FFC999","#A0F0E0","#F7A8A8","#C9E3A6","#B5C7FF"];
+const SIZE = 15;
+const ALPHA = "ABCDEFGHIJKLMNOPRSTUVWY";
+
+let grid, placements, words, found, selecting=false, sel=[], startTime, timerId, hintsUsed=0;
+const boardEl=document.getElementById("board");
+
+const norm = s => s.replace(/[^a-z]/gi,"").toUpperCase();
+const shuffle = a => {for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const DIRS=[[0,1],[1,0],[0,-1],[-1,0]];
+
+// Случайный "змейкой" путь по свободным клеткам
+function placeWord(word, g){
+  const free=[];
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!g[r][c])free.push([r,c]);
+  shuffle(free);
+  let budget=4000;
+  for(const start of free.slice(0,60)){
+    const path=[start], used=new Set([start[0]+","+start[1]]);
+    const dfs=()=>{
+      if(--budget<0) return false;
+      if(path.length===word.length) return true;
+      const [r,c]=path[path.length-1];
+      // лёгкое предпочтение прямому направлению ради читаемости
+      const dirs=shuffle(DIRS.slice());
+      if(path.length>1 && Math.random()<.45){
+        const [pr,pc]=path[path.length-2]; const d=[r-pr,c-pc];
+        dirs.sort((a,b)=>(b[0]===d[0]&&b[1]===d[1])-(a[0]===d[0]&&a[1]===d[1]));
+      }
+      for(const [dr,dc] of dirs){
+        const nr=r+dr,nc=c+dc,k=nr+","+nc;
+        if(nr<0||nc<0||nr>=SIZE||nc>=SIZE||g[nr][nc]||used.has(k))continue;
+        path.push([nr,nc]);used.add(k);
+        if(dfs())return true;
+        path.pop();used.delete(k);
+      }
+      return false;
+    };
+    if(dfs()) return path;
+    if(budget<0) return null;
+  }
+  return null;
+}
+
+function generate(){
+  words=PAIRS.map(([en,ru],i)=>({en,ru,key:norm(en),color:COLORS[i%COLORS.length]}));
+  const order=words.map((w,i)=>i).sort((a,b)=>words[b].key.length-words[a].key.length);
+  for(let attempt=0;attempt<300;attempt++){
+    const g=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+    const pl={}; let ok=true;
+    for(const i of order){
+      const p=placeWord(words[i].key,g);
+      if(!p){ok=false;break}
+      p.forEach(([r,c],j)=>g[r][c]=words[i].key[j]);
+      pl[i]=p;
+    }
+    if(ok){
+      for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)
+        if(!g[r][c])g[r][c]=ALPHA[Math.floor(Math.random()*ALPHA.length)];
+      grid=g;placements=pl;return;
+    }
+  }
+  alert("Не удалось построить поле, нажмите «Новая игра» ещё раз.");
+}
+
+function cellSize(){
+  const avail=Math.min(window.innerWidth-90, 620);
+  return Math.max(20,Math.floor((avail-20-3*(SIZE-1))/SIZE));
+}
+
+function render(){
+  boardEl.style.setProperty("--cs",cellSize()+"px");
+  boardEl.style.gridTemplateColumns=`repeat(${SIZE},var(--cs))`;
+  boardEl.innerHTML="";
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+    const d=document.createElement("div");
+    d.className="cell";d.textContent=grid[r][c];d.dataset.r=r;d.dataset.c=c;
+    boardEl.appendChild(d);
+  }
+  const ul=document.getElementById("words");ul.innerHTML="";
+  words.forEach((w,i)=>{
+    const li=document.createElement("li");li.id="w"+i;
+    li.innerHTML=`<span class="ru">${w.ru}</span><span class="en"></span>`;
+    ul.appendChild(li);
+  });
+  updateEn();updateScore();
+}
+
+const cellAt=(r,c)=>boardEl.children[r*SIZE+c];
+const isFound=(r,c)=>cellAt(r,c).classList.contains("found");
+
+function updateEn(){
+  const show=document.getElementById("showEn").checked;
+  words.forEach((w,i)=>{
+    const li=document.getElementById("w"+i);
+    li.querySelector(".en").textContent=(show||found.has(i))?w.en:"";
+  });
+}
+function updateScore(){
+  document.getElementById("score").textContent=`${found.size} / ${words.length}`;
+}
+
+function paintSel(){
+  boardEl.querySelectorAll(".sel").forEach(e=>e.classList.remove("sel"));
+  sel.forEach(([r,c])=>cellAt(r,c).classList.add("sel"));
+  document.getElementById("current").textContent=sel.map(([r,c])=>grid[r][c]).join("");
+}
+
+function cellFromPoint(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(!el||!el.classList.contains("cell"))return null;
+  return [+el.dataset.r,+el.dataset.c];
+}
+
+function extend(pos){
+  if(!pos)return;
+  const [r,c]=pos;
+  if(isFound(r,c))return;
+  const last=sel[sel.length-1];
+  if(last&&last[0]===r&&last[1]===c)return;
+  // шаг назад — убрать последнюю клетку
+  const prev=sel[sel.length-2];
+  if(prev&&prev[0]===r&&prev[1]===c){sel.pop();paintSel();return}
+  if(sel.some(([a,b])=>a===r&&b===c))return;
+  if(last&&Math.abs(last[0]-r)+Math.abs(last[1]-c)!==1)return;
+  sel.push([r,c]);paintSel();
+}
+
+function finish(){
+  selecting=false;
+  const str=sel.map(([r,c])=>grid[r][c]).join("");
+  const idx=words.findIndex((w,i)=>!found.has(i)&&w.key===str);
+  if(idx>=0){
+    found.add(idx);
+    sel.forEach(([r,c])=>{const e=cellAt(r,c);e.classList.add("found");e.classList.remove("hint");e.style.background=words[idx].color});
+    const li=document.getElementById("w"+idx);
+    li.classList.add("done");li.style.borderLeftColor=words[idx].color;
+    updateEn();updateScore();
+    if(found.size===words.length)win();
+  }else if(sel.length>1){
+    sel.forEach(([r,c])=>{const e=cellAt(r,c);e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")});
+  }
+  sel=[];paintSel();
+}
+
+boardEl.addEventListener("pointerdown",e=>{
+  const p=cellFromPoint(e.clientX,e.clientY);if(!p)return;
+  e.preventDefault();selecting=true;sel=[];extend(p);
+});
+window.addEventListener("pointermove",e=>{if(selecting)extend(cellFromPoint(e.clientX,e.clientY))});
+window.addEventListener("pointerup",()=>{if(selecting)finish()});
+window.addEventListener("pointercancel",()=>{if(selecting)finish()});
+
+document.getElementById("hintBtn").onclick=()=>{
+  const left=words.map((w,i)=>i).filter(i=>!found.has(i));
+  if(!left.length)return;
+  // подсвечиваем первые две буквы слова, у которого ещё нет подсказки
+  const i=left.find(i=>!cellAt(...placements[i][0]).classList.contains("hint"))??left[0];
+  placements[i].slice(0,2).forEach(([r,c])=>cellAt(r,c).classList.add("hint"));
+  hintsUsed++;
+};
+document.getElementById("showEn").onchange=updateEn;
+document.getElementById("newBtn").onclick=newGame;
+
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function tick(){document.getElementById("timer").textContent=fmt(Math.floor((Date.now()-startTime)/1000))}
+function win(){
+  clearInterval(timerId);
+  document.getElementById("winText").textContent=
+    `Время: ${fmt(Math.floor((Date.now()-startTime)/1000))}. Подсказок: ${hintsUsed}. Нажмите «Новая игра», чтобы получить другое поле.`;
+  document.getElementById("win").classList.add("show");
+}
+
+function newGame(){
+  found=new Set();sel=[];hintsUsed=0;
+  document.getElementById("win").classList.remove("show");
+  generate();render();
+  clearInterval(timerId);startTime=Date.now();tick();timerId=setInterval(tick,1000);
+}
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>boardEl.style.setProperty("--cs",cellSize()+"px"),150)});
+newGame();
+</script>
+</body>
+</html>
