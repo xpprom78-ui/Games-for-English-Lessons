@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story: The Fox's Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:780px;margin:0 auto;padding:28px 16px 48px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  header{position:relative;margin-bottom:14px}
+  h1{font-family:Caveat,cursive;font-size:54px;line-height:1;margin:0;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  header p{margin:8px 0 0;color:var(--muted);max-width:56ch;position:relative;z-index:1}
+
+  .leaves{display:flex;align-items:center;gap:8px;margin:0 0 18px;position:relative;z-index:1;flex-wrap:wrap}
+  .leaves .l{font-size:14px;color:var(--muted);margin-right:4px}
+  .leaf{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px dashed #C9BFAE;background:#fff}
+  .leaf.got{border:2px solid var(--margin);background:#FDF0F2;animation:pop .6s}
+  @keyframes pop{0%{transform:scale(1.5) rotate(-20deg)}100%{transform:none}}
+
+  .sheet{background:#fff;border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);padding:28px 30px 26px;position:relative;z-index:1}
+  .seal{position:absolute;top:-16px;right:24px;width:46px;height:46px;background:var(--margin);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:22px;transform:rotate(6deg);
+    box-shadow:inset 0 0 0 2px var(--margin),inset 0 0 0 4px #fff}
+  h2{font-family:Caveat,cursive;font-size:40px;margin:0 0 10px;line-height:1;color:var(--ink)}
+  .step{font-size:14px;color:var(--muted);margin:0 0 6px}
+  .story{font-size:19px;line-height:1.6;margin:0 0 6px;max-width:62ch}
+  .story .w{font:inherit;font-weight:800;color:inherit;border:none;border-radius:0;padding:0 3px;cursor:pointer;
+    background:linear-gradient(transparent 45%,var(--hl) 45% 92%,transparent 92%)}
+  .story .w:hover{background:var(--hl);color:inherit}
+  .ru{font-size:15px;color:var(--muted);line-height:1.55;margin:6px 0 0;display:none;max-width:62ch}
+  .ru.show{display:block}
+  .ru b{color:var(--margin)}
+  .linkbtn{background:none;border:none;padding:0;color:var(--margin);font:600 14px Manrope,sans-serif;text-decoration:underline;cursor:pointer}
+  .linkbtn:hover{background:none;color:var(--ink)}
+  .ask{font-family:Caveat,cursive;font-size:30px;color:var(--ink);margin:20px 0 8px}
+
+  button{font:600 15px Manrope,sans-serif;padding:10px 16px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  button.main{background:var(--ink);color:#fff}
+  button.main:hover{background:var(--margin);border-color:var(--margin)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+
+  .choices{display:grid;gap:10px}
+  .choice{display:flex;gap:12px;align-items:flex-start;text-align:left;font-weight:600;font-size:16px;line-height:1.45;padding:12px 14px}
+  .choice .k{flex:none;font:700 22px/1 Caveat,cursive;width:22px;color:var(--margin)}
+  .choice:hover .k{color:#fff}
+  .choice.no{opacity:.4;text-decoration:line-through;pointer-events:none}
+  .choice.yes{border-color:var(--good);color:var(--good);background:#E3F0DE;pointer-events:none}
+  .choice.yes .k{color:var(--good)}
+
+  .then{margin-top:14px;padding:12px 14px;font-size:16px;line-height:1.5;border-left:4px solid}
+  .then.good{border-color:var(--good);background:#EEF6EA}
+  .then.bad{border-color:var(--margin);background:#FDF0F2}
+  .shake{animation:shake .4s}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}}
+
+  /* карта */
+  .map{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .place{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 16px;min-height:104px;box-shadow:4px 4px 0 var(--ink)}
+  .place .ic{font-size:30px;line-height:1}
+  .place .nm{font:700 26px/1.1 Caveat,cursive}
+  .place .st{font-size:13px;font-weight:600;color:var(--muted)}
+  .place:hover .st{color:#E8ECF6}
+  .place.done{border-color:var(--margin);color:var(--margin);box-shadow:4px 4px 0 var(--margin);background:#FDF0F2;pointer-events:none}
+  .place.locked{border-style:dashed;border-color:#B8AFA2;color:#9A9187;box-shadow:none;cursor:not-allowed;background:#FAF7F0}
+  .place.locked:hover{background:#FAF7F0;color:#9A9187}.place.locked:hover .st{color:var(--muted)}
+  .trail{margin-top:14px;font-size:15px;color:var(--muted)}
+
+  .result,.teacher{margin-top:22px;padding:16px 18px;background:#fff;border:2px dashed var(--margin);display:none;position:relative;z-index:1}
+  .teacher{border:2px solid var(--ink)}
+  .result.show,.teacher.show{display:block}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F5F0E6;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok-t{color:var(--good);font-weight:800}.bad-t{color:var(--margin);font-weight:800}
+  .foot{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+
+  @media (max-width:600px){
+    .page{padding-left:44px}h1{font-size:42px}.sheet{padding:24px 16px 20px}.story{font-size:17px}
+    .map{grid-template-columns:1fr}.place{min-height:0}
+  }
+  @media (prefers-reduced-motion:reduce){.leaf.got,.shake{animation:none}}
+  /* ===== Японская тема: васи, сакура, клён ===== */
+  :root{
+    --paper:#FAF7F0; --grid:#ECE3D3; --ink:#22397A; --margin:#C8402F;
+    --text:#2A2B33; --muted:#7A726A; --good:#3E7B3A; --hl:#F9CAD5;
+    --sakura:#F4B3C2; --bark:#5B3A29;
+  }
+  .page{z-index:1}
+  .top{display:flex;align-items:flex-start;gap:16px;position:relative;z-index:1}
+  .hanko{flex:none;writing-mode:vertical-rl;font:700 15px/1 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:3px;
+    color:#fff;background:var(--margin);padding:8px 5px;border-radius:3px;transform:rotate(5deg);margin-top:6px;
+    box-shadow:inset 0 0 0 2px var(--margin),inset 0 0 0 3.5px #fff}
+  .branch{position:absolute;top:-26px;right:-6px;width:170px;pointer-events:none;z-index:0}
+  .sub{position:relative;z-index:1}
+  .petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .petals i{position:absolute;top:-30px;width:12px;height:9px;background:var(--sakura);border-radius:12px 0 12px 0;opacity:.7;animation:fall linear infinite}
+  .petals i.leaf{background:none;width:auto;height:auto;font-size:15px;font-style:normal;opacity:.8}
+  @keyframes fall{to{transform:translate(var(--dx),112vh) rotate(560deg)}}
+  @media (max-width:560px){.branch{width:84px;top:-22px;right:-10px;opacity:.7}}
+  @media (prefers-reduced-motion:reduce){.petals{display:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <svg class="branch" viewBox="0 0 200 120" aria-hidden="true">
+    <defs><g id="fl"><g fill="#F4B3C2"><ellipse cy="-7" rx="5" ry="7"/><ellipse cy="-7" rx="5" ry="7" transform="rotate(72)"/><ellipse cy="-7" rx="5" ry="7" transform="rotate(144)"/><ellipse cy="-7" rx="5" ry="7" transform="rotate(216)"/><ellipse cy="-7" rx="5" ry="7" transform="rotate(288)"/></g><circle r="2.6" fill="#C8402F"/></g></defs>
+    <path d="M202 6C160 18 128 30 98 54S46 88 8 98" stroke="#5B3A29" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M126 36C122 22 130 10 146 4M70 72C64 84 66 98 76 110" stroke="#5B3A29" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <use href="#fl" transform="translate(146 6)"/><use href="#fl" transform="translate(168 22) scale(.8)"/>
+    <use href="#fl" transform="translate(104 52)"/><use href="#fl" transform="translate(76 108) scale(.9)"/>
+    <use href="#fl" transform="translate(40 84) scale(.7)"/><use href="#fl" transform="translate(12 98) scale(.85)"/>
+  </svg>
+  <header>
+    <div class="top"><h1 id="sTitle"></h1><span class="hanko" aria-hidden="true">物語</span></div>
+    <p id="lead"></p>
+  </header>
+  <div class="leaves" id="leaves"></div>
+
+  <main class="sheet" id="sheet"></main>
+
+  <div class="result" id="result">
+    <h2 id="resTitle">The end!</h2>
+    <div>Write your name, copy your result and send it to your teacher as your answer.</div>
+    <input id="studentName" placeholder="First and last name" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Copy my result</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher" lang="ru">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tMist" placeholder="Ошибки" size="7">
+      <input id="tHints" placeholder="Подсказки" size="8">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+
+  <div class="foot">
+    <button id="endBtn">Finish and get my code</button>
+    <button id="restartBtn">Start again</button>
+    <label class="tog"><input type="checkbox" id="autoSpeak" checked> Sound</label>
+  </div>
+</div>
+
+<script>
+// ================== СОДЕРЖАНИЕ ИСТОРИИ ==================
+// Слово в фигурных скобках {…} подсвечивается. В choices: ok:true — верный выбор, ok:false — ошибка.
+// Места можно проходить в любом порядке, последнее место в списке открывается в конце.
+const TITLE = "The Fox's Map";
+const START = {
+  en:"You have come to Kyoto for the autumn festival. On your first morning a small red fox runs past you and drops a piece of paper. It is a map of the city with a message: “Bring me a red leaf from every place on this map, then come to my house before sunset. — The Fox.” You decide to follow the map.",
+  ru:"Вы приехали в Киото на осенний праздник. В первое же утро мимо вас пробегает маленькая рыжая лиса и роняет листок бумаги. Это карта города и записка: «Принеси мне красный лист из каждого места на этой карте, а потом приходи ко мне домой до заката. — Лиса». Вы решаете пойти по карте."
+};
+const PLACES = [
+  { name:"Kyoto Station", icon:"🚉",
+    intro:{en:"You need to take a train across the city, so you go to the station first.", ru:"Вам нужно доехать на поезде через весь город, поэтому сначала вы идёте на вокзал."},
+    steps:[
+      { word:"crowds", tr:"толпы",
+        en:"The station is full of {crowds}. People are pushing, and you can hardly see the ticket machines.",
+        ru:"Вокзал полон толп. Люди толкаются, и вы едва видите билетные автоматы.",
+        choices:[
+          {t:"Hold your bag tightly and move slowly through the people.", ok:true, then:"Good idea. Step by step, you get to the ticket machines."},
+          {t:"Sit down on the empty floor and enjoy the silence.", ok:false, then:"Empty? There are thousands of people here! Somebody nearly steps on you."}
+        ]},
+      { word:"a delay", tr:"задержка",
+        en:"A voice announces: “Because of the strong wind, there is {a delay}. The train will come in thirty minutes.”",
+        ru:"Голос объявляет: «Из-за сильного ветра задержка. Поезд прибудет через тридцать минут».",
+        choices:[
+          {t:"Buy a hot drink and wait.", ok:true, then:"The tea is warm, and thirty minutes go fast."},
+          {t:"Run! The train is leaving right now!", ok:false, then:"The train is late, not early. You run for nothing and feel silly."}
+        ]},
+      { word:"route", tr:"маршрут",
+        en:"A kind guard looks at your map. “There are two ways to get there,” he says, “but this {route} is faster.”",
+        ru:"Добрый охранник смотрит на вашу карту. «Туда можно добраться двумя путями, — говорит он, — но этот маршрут быстрее».",
+        choices:[
+          {t:"Follow the way he shows you on the map.", ok:true, then:"You thank him and take the faster way."},
+          {t:"Ask him what kind of food a route is.", ok:false, then:"He laughs: “It's not food! It's the way from one place to another.”"}
+        ]},
+      { word:"apology", tr:"извинение",
+        en:"On the platform you bump into an old man, and his newspaper falls. He looks at you and waits for an {apology}.",
+        ru:"На платформе вы налетаете на пожилого мужчину, и у него падает газета. Он смотрит на вас и ждёт извинения.",
+        choices:[
+          {t:"Bow and say: “I'm so sorry!”", ok:true, then:"He smiles and bows back. “No problem, young traveller.”"},
+          {t:"Give him your ticket as a present.", ok:false, then:"He looks confused. He doesn't want a ticket, he wants you to say sorry."}
+        ]},
+      { word:"touch wood", tr:"тьфу-тьфу",
+        en:"The man says: “I've taken this train every day for forty years and I've never lost my umbrella, {touch wood}!” Then he knocks on the wooden bench.",
+        ru:"Мужчина говорит: «Я сорок лет каждый день езжу на этом поезде и ни разу не потерял зонт, тьфу-тьфу!» И стучит по деревянной скамейке.",
+        choices:[
+          {t:"Laugh and knock on the bench too, for good luck.", ok:true, then:"You both laugh. He takes a red maple leaf from his pocket: “For luck!”"},
+          {t:"Tell him that touching benches is not allowed.", ok:false, then:"He isn't breaking any rules. It's just a way to say “I hope my good luck continues”."}
+        ]}
+    ],
+    outro:{en:"The train arrives. The old man waves goodbye, and you have your first red leaf.", ru:"Приходит поезд. Пожилой мужчина машет вам на прощание, а у вас первый красный лист."} },
+
+  { name:"Nishiki Market", icon:"🏮",
+    intro:{en:"Nishiki Market is a long, narrow street full of food shops. It smells of fish, tea and sweets.", ru:"Рынок Нисики — длинная узкая улица, полная продуктовых лавок. Здесь пахнет рыбой, чаем и сладостями."},
+    steps:[
+      { word:"even though", tr:"несмотря на",
+        en:"{Even though} it is raining, the market is full of people. Everybody has an umbrella.",
+        ru:"Несмотря на дождь, рынок полон людей. У всех зонтики.",
+        choices:[
+          {t:"Open your umbrella and go in.", ok:true, then:"The rain doesn't stop anyone here, so it doesn't stop you."},
+          {t:"Go home: the market is closed when it rains.", ok:false, then:"But it's full of people! The rain didn't stop them."}
+        ]},
+      { word:"slurp", tr:"прихлёбывать",
+        en:"You stop at a noodle stall. The man next to you begins to {slurp} his soup very loudly.",
+        ru:"Вы останавливаетесь у лавки с лапшой. Мужчина рядом начинает очень громко прихлёбывать суп.",
+        choices:[
+          {t:"Do the same: in Japan it's polite to make noise with noodles.", ok:true, then:"The cook nods happily. Loud noodles mean tasty noodles!"},
+          {t:"Ask him to be quiet: it is very rude.", ok:false, then:"Not in Japan! Here this noise shows the food is good. The cook looks sad."}
+        ]},
+      { word:"pleased", tr:"довольный",
+        en:"The cook watches you finish the whole bowl. He looks very {pleased}.",
+        ru:"Повар смотрит, как вы доедаете всю миску. Он выглядит очень довольным.",
+        choices:[
+          {t:"Smile and say: “It was delicious!”", ok:true, then:"He is so happy that he gives you a small sweet."},
+          {t:"Say sorry, because he is angry with you.", ok:false, then:"He isn't angry at all. He is happy with what he sees."}
+        ]},
+      { word:"tights", tr:"чулки",
+        en:"It is getting cold. In a tiny clothes shop you see warm woollen {tights}.",
+        ru:"Становится холодно. В крошечном магазине одежды вы видите тёплые шерстяные чулки.",
+        choices:[
+          {t:"Buy a pair to wear under your trousers.", ok:true, then:"Your legs are warm now. Great choice!"},
+          {t:"Buy them and wear them on your head as a hat.", ok:false, then:"They are for legs, not for your head! People are laughing at you."}
+        ]},
+      { word:"purchases", tr:"покупки",
+        en:"Your hands are full of bags: noodles, sweets, tights... The shopkeeper offers you a big cloth to wrap all your {purchases}.",
+        ru:"У вас полные руки пакетов: лапша, сладости, чулки... Продавец предлагает вам большой платок, чтобы завернуть все покупки.",
+        choices:[
+          {t:"Put all the things you bought in the cloth.", ok:true, then:"Everything fits. And under the cloth you find a red maple leaf!"},
+          {t:"Give the cloth back: you haven't bought anything.", ok:false, then:"But your hands are full of bags! Look at everything you bought."}
+        ]}
+    ],
+    outro:{en:"You put the leaf carefully in your pocket and leave the busy market.", ru:"Вы аккуратно кладёте лист в карман и уходите с шумного рынка."} },
+
+  { name:"Temple Garden", icon:"⛩️",
+    intro:{en:"The map takes you to an old temple with a beautiful garden.", ru:"Карта приводит вас к старому храму с красивым садом."},
+    steps:[
+      { word:"maple tree", tr:"клён",
+        en:"In the middle of the garden there is a huge {maple tree}. Its leaves are red and gold.",
+        ru:"Посреди сада растёт огромный клён. Его листья красные и золотые.",
+        choices:[
+          {t:"Stand under its branches and look at the red leaves.", ok:true, then:"The leaves look like little red hands. They are beautiful."},
+          {t:"Look for pink flowers on its branches.", ok:false, then:"Pink flowers are on cherry trees in spring. This tree has red leaves in autumn."}
+        ]},
+      { word:"embarrassed", tr:"смущённый",
+        en:"You walk into the temple hall in your shoes. Everybody looks at you, and you feel very {embarrassed}.",
+        ru:"Вы входите в зал храма в обуви. Все смотрят на вас, и вам очень неловко.",
+        choices:[
+          {t:"Go red, say sorry and quickly take off your shoes.", ok:true, then:"That's what people do when they feel shy and uncomfortable."},
+          {t:"Feel proud and walk even faster.", ok:false, then:"You shouldn't feel proud! Your face should be red now."}
+        ]},
+      { word:"forgive", tr:"простить",
+        en:"A monk comes up to you. You are sure he is angry. But he says: “Don't worry. I {forgive} you. Many visitors forget.”",
+        ru:"К вам подходит монах. Вы уверены, что он сердится. Но он говорит: «Не волнуйся. Я тебя прощаю. Многие гости забывают».",
+        choices:[
+          {t:"Thank him: you are glad he isn't angry.", ok:true, then:"He smiles and gives you a cup of green tea."},
+          {t:"Get ready to be punished.", ok:false, then:"He isn't going to punish you. He has stopped being angry."}
+        ]},
+      { word:"muffle", tr:"приглушать",
+        en:"The monk closes the heavy doors to {muffle} the noise of the street. The hall becomes very quiet.",
+        ru:"Монах закрывает тяжёлые двери, чтобы приглушить шум улицы. В зале становится очень тихо.",
+        choices:[
+          {t:"Listen to the soft sound of the temple bells.", ok:true, then:"Without the street noise, you can hear every bell."},
+          {t:"Shout, because now it is much louder.", ok:false, then:"It isn't louder, it's quieter. Everyone looks at you again!"}
+        ]},
+      { word:"appear", tr:"появляться",
+        en:"Suddenly a small red fox {appears} in the corner of the garden. It looks at you and runs to the maple tree.",
+        ru:"Вдруг в углу сада появляется маленькая рыжая лиса. Она смотрит на вас и бежит к клёну.",
+        choices:[
+          {t:"Follow the fox quietly.", ok:true, then:"Under the maple tree the fox leaves a perfect red leaf for you."},
+          {t:"Stop looking: the fox has disappeared.", ok:false, then:"It hasn't gone, it has just come! It is right there."}
+        ]}
+    ],
+    outro:{en:"You bow to the monk and look at the map again.", ru:"Вы кланяетесь монаху и снова смотрите на карту."} },
+
+  { name:"The Fox's House", icon:"🦊",
+    intro:{en:"The last place on the map is a little wooden house in the forest, behind hundreds of red gates.", ru:"Последнее место на карте — маленький деревянный домик в лесу за сотнями красных ворот."},
+    steps:[
+      { word:"probability", tr:"вероятность",
+        en:"Dark clouds are coming. A sign at the gate says: “{Probability} of rain this afternoon: 90%.”",
+        ru:"Надвигаются тёмные тучи. На табличке у ворот написано: «Вероятность дождя после обеда: 90%».",
+        choices:[
+          {t:"Hurry up: it will almost certainly rain.", ok:true, then:"You walk faster. Good: the first drops are already falling."},
+          {t:"Relax: there will be no rain today.", ok:false, then:"Ninety percent means it's very likely! Now you are wet."}
+        ]},
+      { word:"she isn't succeeding", tr:"у неё не получается",
+        en:"Inside the house a fox girl is trying to light a magic lantern. She tries again and again, but {she isn't succeeding}.",
+        ru:"В домике девочка-лиса пытается зажечь волшебный фонарь. Она пробует снова и снова, но у неё не получается.",
+        choices:[
+          {t:"Offer to help her.", ok:true, then:"She looks up, surprised, and lets you hold the lantern."},
+          {t:"Congratulate her on her great result.", ok:false, then:"There is no result, that's the problem! The lantern is still dark."}
+        ]},
+      { word:"make a spell", tr:"заклинание",
+        en:"“I need the red leaves,” she says. “With them I can {make a spell} and save the festival lights.”",
+        ru:"«Мне нужны красные листья, — говорит она. — С ними я смогу сотворить заклинание и спасти огни праздника».",
+        choices:[
+          {t:"Give her the leaves and watch the magic.", ok:true, then:"She puts the leaves around the lantern and says some strange words."},
+          {t:"Help her write a spelling test.", ok:false, then:"Not that kind of spell! She is talking about magic words."}
+        ]},
+      { word:"the fire came out from the chimney", tr:"огонь вышел из трубы",
+        en:"Suddenly there is a loud BOOM! Smoke fills the room, and {the fire came out from the chimney} on the roof.",
+        ru:"Вдруг раздаётся громкое БУМ! Комнату наполняет дым, и из трубы на крыше вырывается огонь.",
+        choices:[
+          {t:"Run outside and look up at the roof.", ok:true, then:"Red and gold sparks fly from the roof into the sky, like fireworks!"},
+          {t:"Look for the fire under the bed.", ok:false, then:"The fire is up on the roof, not under the bed!"}
+        ]},
+      { word:"disappointed", tr:"разочарован",
+        en:"The fox girl thinks her magic went wrong. She looks very {disappointed}.",
+        ru:"Девочка-лиса думает, что её волшебство не удалось. Она выглядит очень разочарованной.",
+        choices:[
+          {t:"Show her the sky: the spell has worked!", ok:true, then:"She looks up, and her sad face becomes a big smile."},
+          {t:"Tell her to stop jumping with joy.", ok:false, then:"She isn't happy at all. She is sad because she expected something better."}
+        ]}
+    ],
+    outro:{en:"Above the forest the sparks turn into thousands of little lights.", ru:"Над лесом искры превращаются в тысячи маленьких огоньков."} }
+];
+const ENDING = {
+  en:"That evening the festival begins. Lanterns shine in every street, and the crowds are happy. The fox girl sits next to you on a bench. “Thank you,” she says. “Without you, I wasn't succeeding at all.” You smile: it was the most magical day of your trip.",
+  ru:"Вечером начинается праздник. Фонари сияют на каждой улице, и толпы людей радуются. Девочка-лиса садится рядом с вами на скамейку. «Спасибо, — говорит она. — Без тебя у меня совсем ничего не получалось». Вы улыбаетесь: это был самый волшебный день вашей поездки."
+};
+// =======================================================
+
+const $=id=>document.getElementById(id);
+const sheet=$("sheet");
+const FINAL=PLACES.length-1;               // последнее место открывается в конце
+const WORD_COUNT=PLACES.reduce((n,p)=>n+p.steps.length,0);
+let done, path, mistakes, hints, errWords, startTime, result, finished, cur, stepI, peeked, answered;
+
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const plain=s=>s.replace(/[{}]/g,"");
+function speak(t){if(!$("autoSpeak").checked||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function shake(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+function storyBlock(en,ru){
+  return `<p class="story">${esc(en)}</p>
+    <button class="linkbtn" onclick="this.nextElementSibling.classList.toggle('show')">Show translation</button>
+    <p class="ru">${esc(ru)}</p>`;
+}
+
+function drawLeaves(){
+  const n=PLACES.length-1;
+  $("leaves").innerHTML=`<span class="l">Red leaves:</span>`+
+    Array.from({length:n},(x,i)=>`<div class="leaf ${i<done.filter(k=>k!==FINAL).length?"got":""}" aria-hidden="true">${i<done.filter(k=>k!==FINAL).length?"🍁":""}</div>`).join("")+
+    `<span class="l" style="margin-left:6px">${done.filter(k=>k!==FINAL).length} of ${n}</span>`;
+}
+
+// ---------- начало ----------
+function showStart(){
+  drawLeaves();
+  sheet.innerHTML=`<div class="seal">🦊</div><h2>A message from the fox</h2>${storyBlock(START.en,START.ru)}
+    <div class="actions"><button class="main" id="go">Open the map</button><button id="listen">🔊 Listen</button></div>`;
+  $("go").onclick=showMap;$("listen").onclick=()=>speak(START.en);$("go").focus();
+}
+
+// ---------- карта ----------
+function showMap(){
+  drawLeaves();
+  const others=PLACES.map((p,i)=>i).filter(i=>i!==FINAL);
+  const open=others.every(i=>done.includes(i));
+  const q=done.length===0?"Where do you go first?":open?"You have all the leaves. Time to visit the fox!":"Where do you go next?";
+  sheet.innerHTML=`<div class="seal">🗺️</div><h2>The map</h2>
+    <p class="ask" style="margin-top:0">${q}</p>
+    <div class="map">${PLACES.map((p,i)=>{
+      const isDone=done.includes(i),locked=i===FINAL&&!open;
+      const st=isDone?"Visited 🍁":locked?"Opens when you have all the leaves":"Go here";
+      return `<button class="place ${isDone?"done":""} ${locked?"locked":""}" data-i="${i}" ${isDone?'tabindex="-1"':""} ${locked?'aria-disabled="true"':""}>
+        <span class="ic" aria-hidden="true">${p.icon}</span><span class="nm">${esc(p.name)}</span><span class="st">${st}</span></button>`;
+    }).join("")}</div>
+    ${path.length?`<div class="trail">Your route: ${path.map(i=>esc(PLACES[i].name)).join(" → ")}</div>`:""}`;
+  sheet.querySelectorAll(".place").forEach(b=>b.onclick=()=>{
+    if(b.classList.contains("locked")){shake(b);return}
+    enterPlace(+b.dataset.i);
+  });
+  const first=sheet.querySelector(".place:not(.done):not(.locked)");if(first)first.focus();
+}
+
+// ---------- место ----------
+function enterPlace(i){
+  cur=i;stepI=0;path.push(i);
+  const p=PLACES[i];
+  sheet.innerHTML=`<div class="seal">${p.icon}</div><h2>${esc(p.name)}</h2>${storyBlock(p.intro.en,p.intro.ru)}
+    <div class="actions"><button class="main" id="go">Look around</button></div>`;
+  speak(p.intro.en);
+  $("go").onclick=showStep;$("go").focus();
+  sheet.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function showStep(){
+  const p=PLACES[cur],s=p.steps[stepI];
+  peeked=false;answered=false;
+  const text=esc(s.en).replace(/\{(.+?)\}/,'<button class="w" title="Listen">$1</button>');
+  const opts=shuffle(s.choices);
+  sheet.innerHTML=`<div class="seal">${p.icon}</div><h2>${esc(p.name)}</h2>
+    <p class="step">Part ${stepI+1} of ${p.steps.length}</p>
+    <p class="story">${text}</p>
+    <button class="linkbtn" id="peek">Translate (counts as a hint)</button>
+    <p class="ru" id="ruLine"><b>${esc(plain(s.en.match(/\{(.+?)\}/)?.[1]||s.word))}</b> — ${esc(s.tr)}<br>${esc(s.ru)}</p>
+    <p class="ask">What do you do?</p>
+    <div class="choices">${opts.map((c,k)=>`<button class="choice" data-k="${s.choices.indexOf(c)}"><span class="k">${k+1}</span><span>${esc(c.t)}</span></button>`).join("")}</div>
+    <div id="then" aria-live="polite"></div>`;
+  const wb=sheet.querySelector(".w");if(wb)wb.onclick=()=>speak(wb.textContent);
+  $("peek").onclick=()=>{if(!peeked){peeked=true;hints++}$("ruLine").classList.add("show");$("peek").remove()};
+  sheet.querySelectorAll(".choice").forEach(b=>b.onclick=()=>choose(b));
+  speak(plain(s.en));
+}
+function choose(b){
+  if(answered)return;
+  const s=PLACES[cur].steps[stepI],c=s.choices[+b.dataset.k];
+  const box=$("then");
+  if(c.ok){
+    answered=true;b.classList.add("yes");
+    sheet.querySelectorAll(".choice:not(.yes)").forEach(x=>{x.classList.add("no");x.tabIndex=-1});
+    const last=stepI===PLACES[cur].steps.length-1;
+    box.innerHTML=`<div class="then good">${esc(c.then)}</div>
+      <div class="actions"><button class="main" id="next">${last?"Continue":"Next"}</button></div>`;
+    speak(c.then);
+    $("next").onclick=()=>{if(last)leavePlace();else{stepI++;showStep()}};
+    $("next").focus();
+  }else{
+    mistakes++;errWords[s.word]=(errWords[s.word]||0)+1;
+    b.classList.add("no");b.tabIndex=-1;shake(b);
+    box.innerHTML=`<div class="then bad">${esc(c.then)} Try again.</div>`;
+    const left=sheet.querySelector(".choice:not(.no)");if(left)left.focus();
+  }
+}
+function leavePlace(){
+  done.push(cur);
+  const p=PLACES[cur];
+  if(cur===FINAL){showEnding();return}
+  drawLeaves();
+  sheet.innerHTML=`<div class="seal">🍁</div><h2>${esc(p.name)}</h2>${storyBlock(p.outro.en,p.outro.ru)}
+    <div class="actions"><button class="main" id="go">Back to the map</button></div>`;
+  speak(p.outro.en);
+  $("go").onclick=showMap;$("go").focus();
+}
+function showEnding(){
+  const p=PLACES[FINAL];
+  sheet.innerHTML=`<div class="seal">🏮</div><h2>The festival</h2>
+    ${storyBlock(p.outro.en+" "+ENDING.en,p.outro.ru+" "+ENDING.ru)}
+    <div class="trail">Your route: ${path.map(i=>esc(PLACES[i].name)).join(" → ")}</div>
+    <div class="actions"><button id="listen">🔊 Listen</button></div>`;
+  $("listen").onclick=()=>speak(p.outro.en+" "+ENDING.en);
+  finish(false);
+}
+
+// клавиши 1, 2, 3 выбирают вариант
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.ctrlKey||e.metaKey||e.altKey)return;
+  const n=parseInt(e.key,10);if(!n)return;
+  const b=[...sheet.querySelectorAll(".choice")].find(x=>x.querySelector(".k").textContent===String(n));
+  if(b&&!b.classList.contains("no"))b.click();
+});
+
+// ---------- результат и код ----------
+const SALT="story-fox-map-2026";
+function makeCode(name,m,h){
+  const str=[SALT,name.trim().toLowerCase(),m,h].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(no name)",r=result;
+  $("report").textContent=`Story: ${TITLE}\nName: ${name}\nCompleted: ${r.status}\nMistakes: ${r.m}\nHints: ${r.h}\nTime: ${r.time}`+
+    (r.hard.length?`\nWords to review: ${r.hard.join(", ")}`:"")+`\nCode: ${makeCode(name,r.m,r.h)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  const hard=Object.entries(errWords).sort((a,b)=>b[1]-a[1]).map(([w])=>w);
+  result={m:mistakes,h:hints,hard,time:fmt(Math.floor((Date.now()-startTime)/1000)),
+    status:early?`${done.length} of ${PLACES.length} places`:"the whole story"};
+  $("resTitle").textContent=early?"Story not finished":"The end!";
+  buildReport();$("result").classList.add("show");
+  setTimeout(()=>$("result").scrollIntoView({behavior:"smooth",block:"nearest"}),early?0:400);
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Copied"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Text selected, press Ctrl+C"}
+};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Finish the story and get your result?"))finish(true)};
+$("restartBtn").onclick=()=>{if(confirm("Start the story again?"))start()};
+
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tMist"),v("tHints"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">Код верный, результат не изменён.</span>':'<span class="bad-t">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+function start(){
+  done=[];path=[];mistakes=0;hints=0;errWords={};startTime=Date.now();result=null;finished=false;
+  $("result").classList.remove("show");$("copied").textContent="";
+  document.title="Story: "+TITLE;$("sTitle").textContent=TITLE;
+  $("lead").textContent=`An interactive story with ${WORD_COUNT} words. Read, decide what to do, and visit ${PLACES.length} places in Kyoto in your own order.`;
+  showStart();
+}
+// Падающие лепестки сакуры и листья клёна (отключаются при «уменьшить движение»)
+(function(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=document.createElement("div");box.className="petals";box.setAttribute("aria-hidden","true");
+  for(let i=0;i<14;i++){
+    const p=document.createElement("i");
+    if(i%5===4){p.className="leaf";p.textContent="🍁"}
+    p.style.left=Math.random()*100+"vw";
+    p.style.animationDuration=(10+Math.random()*10)+"s";
+    p.style.animationDelay=(-Math.random()*20)+"s";
+    p.style.setProperty("--dx",(Math.random()*180-90)+"px");
+    box.appendChild(p);
+  }
+  document.body.prepend(box);
+})();
+start();
+</script>
+</body>
+</html>
