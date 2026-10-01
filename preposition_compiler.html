@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compiler: Prepositions and Phrasal Verbs</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0F1419;--panel:#161B22;--panel2:#1C2330;--line:#30363D;--text:#D6DEE6;--muted:#8B949E;--green:#7EE787;--amber:#F2CC60;--red:#FF7B72;--blue:#79C0FF;--purple:#D2A8FF}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+  .page{max-width:860px;margin:0 auto;padding:22px 16px 48px}
+  h1{font:700 26px "JetBrains Mono",monospace;margin:0;color:var(--green)}
+  h1 span{color:var(--muted);font-weight:500}
+  .intro{color:var(--muted);margin:6px 0 18px;max-width:70ch}
+  .editor{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--line);font:500 13px "JetBrains Mono",monospace}
+  .tabs div{padding:9px 16px;border-right:1px solid var(--line);color:var(--muted)}
+  .tabs div.on{background:var(--panel);color:var(--text);border-top:2px solid var(--amber)}
+  .code{padding:18px 0;font:500 16px/1.9 "JetBrains Mono",monospace;min-height:190px}
+  .ln{display:flex}
+  .ln .n{width:52px;text-align:right;padding-right:16px;color:#6E7681;user-select:none;flex:none}
+  .ln .c{flex:1;padding-right:16px;overflow-wrap:anywhere}
+  .kw{color:var(--purple)}.fn{color:var(--blue)}.str{color:#A5D6FF}.cm{color:#6E7681}
+  .slot{display:inline-block;min-width:64px;text-align:center;border-bottom:2px solid var(--amber);color:var(--amber);padding:0 4px}
+  .slot.ok{border-color:var(--green);color:var(--green)}
+  .ln.active{background:rgba(242,204,96,.06)}
+  .keys{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;border-top:1px solid var(--line);background:var(--panel2)}
+  .keys button{font:700 16px "JetBrains Mono",monospace;padding:9px 18px}
+  button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:4px;cursor:pointer;font:600 15px "IBM Plex Sans",sans-serif;padding:9px 16px}
+  button:hover{border-color:var(--muted)}
+  button.go{background:#238636;border-color:#2EA043;color:#fff}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  .console{background:#0B0F14;border-top:1px solid var(--line);padding:12px 16px;font:500 14px/1.6 "JetBrains Mono",monospace;min-height:92px;max-height:180px;overflow:auto}
+  .console .err{color:var(--red)}.console .ok{color:var(--green)}.console .info{color:var(--muted)}.console .hint{color:var(--amber)}
+  .bar{display:flex;align-items:center;gap:14px;margin:16px 0;flex-wrap:wrap;font:500 14px "JetBrains Mono",monospace;color:var(--muted)}
+  .bar b{color:var(--text)}
+  .prog{flex:1;min-width:160px;height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:var(--green);transition:width .3s}
+  .ru{color:var(--muted);font:14px "IBM Plex Sans",sans-serif;padding:0 16px 12px 68px;min-height:12px}
+  .shake{animation:sh .35s}@keyframes sh{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-top:18px;display:none}
+  .card.show{display:block}
+  .card h2{font:700 13px "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+  input[type=text]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font:15px "IBM Plex Sans",sans-serif;margin:6px 8px 6px 0;max-width:320px;width:100%}
+  .teacher input[type=text]{max-width:160px}
+  .report{white-space:pre-line;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--green);padding:10px 12px;margin:10px 0;font:500 14px "JetBrains Mono",monospace}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok-t{color:var(--green);font-weight:700}.bad-t{color:var(--red);font-weight:700}
+  .foot{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+  @media (max-width:560px){.code{font-size:14px}.ln .n{width:36px;padding-right:8px}.ru{padding-left:44px}}
+  @media (prefers-reduced-motion:reduce){.shake{animation:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>compiler <span>/ prepositions.py</span></h1>
+  <p class="intro">Put in the missing preposition so that the code compiles. Click the buttons or type on your keyboard and press Enter. After a mistake, the compiler gives you a hint.</p>
+
+  <div class="bar"><span>build <b id="cnt">0 / 18</b></span><span>errors <b id="errs">0</b></span><div class="prog"><i id="bar"></i></div></div>
+
+  <div class="editor" id="editor">
+    <div class="tabs"><div class="on">prepositions.py</div><div>README.md</div></div>
+    <div class="code" id="code"></div>
+    <div class="ru" id="ru"></div>
+    <div class="keys" id="keys"></div>
+    <div class="console" id="console" aria-live="polite"></div>
+  </div>
+
+  <div class="foot">
+    <button id="ruBtn">Show translation</button>
+    <button id="endBtn">Finish and get my code</button>
+    <button id="restartBtn">Start again</button>
+  </div>
+
+  <div class="card" id="result">
+    <h2>Result</h2>
+    <div>Write your name, copy your result and send it to your teacher as your answer.</div>
+    <input type="text" id="studentName" placeholder="First and last name" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Copy my result</button><span id="copied"></span></div>
+  </div>
+  <div class="card teacher" id="teacher">
+    <h2>Check a code</h2>
+    <div class="row">
+      <input type="text" id="tName" placeholder="Name">
+      <input type="text" id="tDone" placeholder="Lines">
+      <input type="text" id="tErr" placeholder="Mistakes">
+      <input type="text" id="tCode" placeholder="Code">
+      <button id="tCheck">Check</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ================== СОДЕРЖАНИЕ ==================
+// ___ — место для предлога; verb — к какой связке относится (для подсказки и отчёта)
+const OPTIONS = ["over","out","in","on","up","into"];
+const LINES = [
+  {s:"We can tap ___ this pain point to market the product.", a:"into", verb:"tap into", ru:"Мы можем использовать эту «боль» клиента, чтобы продвигать продукт."},
+  {s:"Thank you for pointing ___ this issue to me.", a:"out", verb:"point out", ru:"Спасибо, что указали мне на эту проблему."},
+  {s:"I took ___ his duties as the Technical Lead.", a:"on", verb:"take on", ru:"Я взял на себя его обязанности технического лида."},
+  {s:"He came ___ with this idea all by himself.", a:"up", verb:"come up with", ru:"Он придумал эту идею сам."},
+  {s:"Hover your camera ___ the timetable.", a:"over", verb:"hover over", ru:"Наведите камеру на расписание."},
+  {s:"This app was written ___ C#.", a:"in", verb:"written in", ru:"Это приложение написано на C#."},
+  {s:"Our team has come ___ with a new design.", a:"up", verb:"come up with", ru:"Наша команда придумала новый дизайн."},
+  {s:"Have you pointed ___ the problem to the manager?", a:"out", verb:"point out", ru:"Ты указал менеджеру на проблему?"},
+  {s:"Anna has taken ___ two new projects this month.", a:"on", verb:"take on", ru:"Анна взяла на себя два новых проекта в этом месяце."},
+  {s:"We have tapped ___ a new market.", a:"into", verb:"tap into", ru:"Мы вышли на новый рынок (начали его использовать)."},
+  {s:"I have hovered the mouse ___ the button, but nothing happens.", a:"over", verb:"hover over", ru:"Я навёл мышку на кнопку, но ничего не происходит."},
+  {s:"We have written the backend ___ Python.", a:"in", verb:"written in", ru:"Мы написали бэкенд на Python."},
+  {s:"The client has pointed ___ three bugs.", a:"out", verb:"point out", ru:"Клиент указал на три бага."},
+  {s:"Nobody has come ___ with a better solution.", a:"up", verb:"come up with", ru:"Никто не придумал решения лучше."},
+  {s:"She has never taken ___ so much work before.", a:"on", verb:"take on", ru:"Она никогда раньше не брала на себя столько работы."},
+  {s:"Our company has tapped ___ the power of AI.", a:"into", verb:"tap into", ru:"Наша компания начала использовать возможности ИИ."},
+  {s:"Move the cursor ___ the icon to see the hint.", a:"over", verb:"hover over", ru:"Наведите курсор на иконку, чтобы увидеть подсказку."},
+  {s:"Is this program written ___ Java?", a:"in", verb:"written in", ru:"Эта программа написана на Java?"}
+];
+// ================================================
+
+const $=id=>document.getElementById(id);
+let order,k,errors,tries,review,startTime,finished,result,typed,showRu=false;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function speak(t){if(!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function log(text,cls){const c=$("console");c.insertAdjacentHTML("beforeend",`<div class="${cls||""}">${text}</div>`);c.scrollTop=c.scrollHeight}
+
+$("keys").innerHTML=OPTIONS.map(o=>`<button data-o="${o}">${o}</button>`).join("");
+$("keys").querySelectorAll("button").forEach(b=>b.onclick=()=>answer(b.dataset.o));
+
+function lineHTML(L,state,val){
+  const [pre,post]=esc(L.s).split("___");
+  const slot=`<span class="slot ${state==="ok"?"ok":""}">${state==="ok"?L.a:(val?esc(val):"___")}</span>`;
+  return `<span class="fn">print</span>(<span class="str">"${pre}</span>${slot}<span class="str">${post}"</span>)`;
+}
+function draw(){
+  const code=$("code");
+  const from=Math.max(0,k-3);
+  let html=`<div class="ln"><span class="n">1</span><span class="c"><span class="cm"># sprint notes: fix the prepositions</span></span></div>`;
+  for(let i=from;i<=Math.min(k,order.length-1);i++){
+    const L=LINES[order[i]];
+    html+=`<div class="ln ${i===k?"active":""}"><span class="n">${i+2}</span><span class="c">${lineHTML(L,i<k?"ok":"",i===k?typed:"")}</span></div>`;
+  }
+  code.innerHTML=html;
+  $("ru").textContent=showRu&&k<order.length?LINES[order[k]].ru:"";
+  $("cnt").textContent=`${k} / ${LINES.length}`;$("errs").textContent=errors;
+  $("bar").style.width=(k/LINES.length*100)+"%";
+}
+function answer(o){
+  if(finished||k>=order.length)return;
+  const L=LINES[order[k]];
+  typed="";
+  if(o===L.a){
+    log(`$ compile line ${k+2} ... <span class="ok">✓ OK</span>`,"info");
+    speak(L.s.replace("___",L.a));
+    k++;tries=0;draw();
+    if(k===order.length){log("BUILD SUCCESSFUL ✓ all lines compiled","ok");finish(false)}
+  }else{
+    errors++;tries++;review[L.verb]=(review[L.verb]||0)+1;
+    const verbWord=L.s.split("___")[0].trim().split(" ").pop();
+    if(tries===1)log(`$ compile line ${k+2} ... <span class="err">SyntaxError: '${esc(verbWord)} ${esc(o)}' is not valid here</span>`,"info");
+    else if(tries===2)log(`<span class="hint">Hint: the phrase is "${esc(L.verb.replace(/ (into|out|on|up|over|in)\b/,m=>" "+m.trim()[0]+"…"))}"</span>`);
+    else log(`<span class="err">Expected '${L.a}' → ${esc(L.verb)}</span>`);
+    draw();const e=$("editor");e.classList.remove("shake");void e.offsetWidth;e.classList.add("shake");
+  }
+}
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||finished)return;
+  if(/^[a-z]$/i.test(e.key)){typed=(typed+e.key.toLowerCase()).slice(0,6);draw()}
+  else if(e.key==="Backspace"){typed=typed.slice(0,-1);draw()}
+  else if(e.key==="Enter"&&typed){e.preventDefault();answer(typed)}
+});
+$("ruBtn").onclick=()=>{showRu=!showRu;$("ruBtn").textContent=showRu?"Hide translation":"Show translation";draw()};
+
+// ---------- результат и код ----------
+const SALT="prep-compiler-2026";
+function makeCode(name,d,e){
+  const str=[SALT,name.trim().toLowerCase(),d,e].join("|");let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function buildReport(){
+  const name=$("studentName").value.trim()||"(no name)",r=result;
+  $("report").textContent=`Compiler: Prepositions\nName: ${name}\nLines: ${r.d}/${LINES.length}\nMistakes: ${r.e}\nTime: ${r.t}`+
+    (r.rev.length?`\nWords to review: ${r.rev.join(", ")}`:"")+`\nCode: ${makeCode(name,r.d,r.e)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  result={d:k,e:errors,t:fmt(Math.floor((Date.now()-startTime)/1000)),rev:Object.entries(review).sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
+  buildReport();$("result").classList.add("show");$("result").scrollIntoView({behavior:"smooth"});
+}
+$("endBtn").onclick=()=>{if(!finished&&confirm("Finish and get your result?"))finish(true)};
+$("restartBtn").onclick=()=>{if(confirm("Start again?"))start()};
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Copied"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Text selected, press Ctrl+C"}
+};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tDone").split("/")[0].trim(),v("tErr"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">The code is correct. The result has not been changed.</span>':'<span class="bad-t">The code does not match. Check that you have entered the data exactly as in the result.</span>';
+};
+
+function start(){
+  // первые 6 строк — из урока по порядку, остальные перемешаны
+  order=[...LINES.slice(0,6).map((l,i)=>i),...shuffle(LINES.slice(6).map((l,i)=>i+6))];
+  k=0;errors=0;tries=0;review={};typed="";startTime=Date.now();finished=false;result=null;
+  $("console").innerHTML="";$("result").classList.remove("show");$("copied").textContent="";
+  log("$ python prepositions.py","info");log("Waiting for input…","info");
+  draw();
+}
+start();
+</script>
+</body>
+</html>

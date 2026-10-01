@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SupportDesk: Ticket Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1419; --panel:#161B22; --panel2:#1C2330; --line:#30363D;
+    --text:#D6DEE6; --muted:#8B949E; --green:#7EE787; --amber:#F2CC60; --red:#FF7B72; --blue:#79C0FF;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+  .mono{font-family:"JetBrains Mono",monospace}
+  .top{display:flex;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+  .logo{font:700 18px "JetBrains Mono",monospace;color:var(--green)}
+  .logo span{color:var(--muted);font-weight:500}
+  .top .stat{font:500 14px "JetBrains Mono",monospace;color:var(--muted)}
+  .top .stat b{color:var(--text)}
+  .spacer{flex:1}
+  .page{max-width:1240px;margin:0 auto;padding:20px 18px 48px}
+  .intro{color:var(--muted);max-width:80ch;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:1.05fr 1.2fr .9fr;gap:16px;align-items:start}
+  @media (max-width:1050px){.grid{grid-template-columns:1fr 1fr}.rules{grid-column:1/-1}}
+  @media (max-width:700px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+  .card h2{font:700 13px "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+  .mail-head{font-size:14px;color:var(--muted);border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:12px}
+  .mail-head b{color:var(--text)}
+  .mail-body{white-space:pre-line}
+  .attach{display:inline-flex;gap:6px;align-items:center;margin-top:12px;padding:6px 10px;border:1px solid var(--line);border-radius:4px;font:500 13px "JetBrains Mono",monospace;color:var(--blue)}
+  .ru{display:none;margin-top:10px;font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;white-space:pre-line}
+  .ru.show{display:block}
+  .link{background:none;border:none;padding:0;margin-top:10px;color:var(--blue);font:600 14px "IBM Plex Sans",sans-serif;text-decoration:underline;cursor:pointer}
+
+  .field{margin-bottom:14px}
+  .field label.lbl{display:block;font:500 13px "JetBrains Mono",monospace;color:var(--muted);margin-bottom:5px}
+  .field label.lbl i{font-style:normal;color:#6E7681}
+  select,textarea,input[type=text]{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font:15px "IBM Plex Sans",sans-serif}
+  textarea{resize:none;height:70px;color:var(--muted);font-size:13px}
+  .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .pills label{cursor:pointer}
+  .pills input{position:absolute;opacity:0}
+  .pills span{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:14px;font:500 13px "JetBrains Mono",monospace}
+  .pills input:checked+span{border-color:var(--amber);color:var(--amber);background:rgba(242,204,96,.1)}
+  .pills input:focus-visible+span{outline:2px solid var(--blue)}
+  .check{display:flex;gap:8px;align-items:center;cursor:pointer}
+  .field.bad select,.field.bad textarea,.field.bad .pills span,.field.bad .check{border-color:var(--red)}
+  .field.good select,.field.good .pills input:checked+span{border-color:var(--green);color:var(--green)}
+  .why{display:none;color:var(--red);font-size:13px;margin-top:4px}
+  .field.bad .why{display:block}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font:700 12px "JetBrains Mono",monospace;margin-left:6px}
+  .b-new{background:rgba(121,192,255,.15);color:var(--blue)}
+  .b-prog{background:rgba(242,204,96,.15);color:var(--amber)}
+  .b-wait{background:rgba(126,231,135,.15);color:var(--green)}
+  .tickethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font:500 14px "JetBrains Mono",monospace}
+
+  button{font:600 15px "IBM Plex Sans",sans-serif;padding:9px 16px;border-radius:4px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}
+  button:hover{border-color:var(--muted)}
+  button.go{background:#238636;border-color:#2EA043;color:#fff}
+  button.go:hover{background:#2EA043}
+  button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  .msg{min-height:22px;margin-top:10px;font:500 14px "JetBrains Mono",monospace}
+  .msg.bad{color:var(--red)}.msg.good{color:var(--green)}
+
+  .reply{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;display:none}
+  .reply.show{display:block}
+  .reply p{margin:0 0 10px}
+  .gapin{display:inline-block;width:auto;min-width:150px;padding:3px 8px;margin:2px 2px;font:600 15px "JetBrains Mono",monospace}
+  .gapin.ok{border-color:var(--green);color:var(--green)}
+  .gapin.no{border-color:var(--red)}
+  .verb{font:500 13px "JetBrains Mono",monospace;color:var(--amber)}
+  .pp{font-size:13px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:8px 0 12px}
+  .pp b{color:var(--green);font-family:"JetBrains Mono",monospace}
+
+  .rules table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+  .rules th,.rules td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}
+  .rules th{color:var(--muted);font:500 12px "JetBrains Mono",monospace}
+  .rules td.m{font-family:"JetBrains Mono",monospace}
+  .rules p{font-size:14px;margin:0 0 10px}
+  .rules ul{margin:0 0 10px;padding-left:18px;font-size:14px}
+  .queue{margin-top:12px;font:500 13px "JetBrains Mono",monospace}
+  .queue div{padding:5px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+
+  .result,.teacher{display:none;margin-top:18px}
+  .result.show,.teacher.show{display:block}
+  .result input,.teacher input{max-width:320px;margin:6px 8px 6px 0}
+  .teacher input{max-width:160px}
+  .report{white-space:pre-line;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--green);padding:10px 12px;margin:10px 0;font:500 14px "JetBrains Mono",monospace}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok-t{color:var(--green);font-weight:700}.bad-t{color:var(--red);font-weight:700}
+  .done{text-align:center;padding:30px 10px}
+  .done h3{font:700 26px "JetBrains Mono",monospace;color:var(--green);margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">SupportDesk <span>/ tracker</span></div>
+  <div class="stat">ticket <b id="num">1 / 4</b></div>
+  <div class="stat">mistakes <b id="mist">0</b></div>
+  <div class="spacer"></div>
+  <button id="endBtn">Finish and get my code</button>
+</div>
+
+<div class="page">
+  <p class="intro">You work in tech support. Read the client's email, fill in all the fields of the ticket (follow the team rules on the right) and click <b>Register ticket</b>. Then reply to the client: put the verbs in the Present Perfect.</p>
+
+  <div class="grid" id="grid">
+    <section class="card" id="mail"></section>
+    <section class="card" id="ticket"></section>
+    <aside class="card rules">
+      <h2>Team rules</h2>
+      <table>
+        <tr><th>priority</th><th>response time</th><th>resolution time</th></tr>
+        <tr><td class="m">critical error</td><td>1 hour</td><td>1 day</td></tr>
+        <tr><td class="m">major error</td><td>4 hours</td><td>3 days</td></tr>
+        <tr><td class="m">minor error</td><td>1 day</td><td>1 week</td></tr>
+        <tr><td class="m">wish or request</td><td>3 days</td><td>we estimate the effort</td></tr>
+      </table>
+      <p><b>Team:</b></p>
+      <ul id="teamList"></ul>
+      <p><b>Watchers:</b> by default, add Olga to all tickets, except for critical errors. For critical errors, add Dmitry (Team Lead).</p>
+      <button class="link" onclick="document.getElementById('rulesRu').classList.toggle('show')">Show translation</button>
+      <div class="ru" id="rulesRu">Приоритет → время реакции → время решения.
+Critical error — критическая ошибка: никто не может работать. Major error — значительная: работать можно, но это большая проблема. Minor error — незначительная мелочь. Wish or request — пожелание или просьба, не ошибка.
+
+Наблюдатели: по умолчанию добавляем Olga ко всем заявкам, за исключением критических ошибок. Для критических ошибок добавляем Dmitry (тимлид).</div>
+      <div class="queue" id="queue"></div>
+    </aside>
+  </div>
+
+  <div class="card result" id="result">
+    <h2>Result</h2>
+    <div>Write your name, copy your result and send it to your teacher as your answer.</div>
+    <input type="text" id="studentName" placeholder="First and last name" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Copy my result</button><span id="copied"></span></div>
+  </div>
+
+  <div class="card teacher" id="teacher">
+    <h2>Check a code</h2>
+    <div class="row">
+      <input type="text" id="tName" placeholder="Name">
+      <input type="text" id="tDone" placeholder="Tickets">
+      <input type="text" id="tMist" placeholder="Mistakes">
+      <input type="text" id="tCode" placeholder="Code">
+      <button id="tCheck">Check</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ================== СОДЕРЖАНИЕ ==================
+const TEAM = [
+  {id:"anna", name:"Anna", role:"backend developer (server, login, reports)"},
+  {id:"ivan", name:"Ivan", role:"mobile developer (mobile app)"},
+  {id:"olga", name:"Olga", role:"account manager (tariff plans, payment)"},
+  {id:"max",  name:"Max",  role:"designer (colors, icons)"}
+];
+const WATCHERS = [{id:"olga",name:"Olga (account manager)"},{id:"dmitry",name:"Dmitry (Team Lead)"}];
+const PRIORITIES = ["critical error","major error","minor error","wish or request"];
+const RESPONSE = ["1 hour","4 hours","1 day","3 days"];
+// В ответе клиенту: {правильный ответ / другой вариант | подсказка-глагол}
+const CASES = [
+  { from:"Mark, TechNova", subject:"URGENT!!!",
+    body:"Hello!\nSince 9 a.m. nobody in our company can log in to the system. We have tried three different browsers. We cannot work at all. Please help!",
+    ru:"Здравствуйте!\nС 9 утра никто в нашей компании не может войти в систему. Мы попробовали три разных браузера. Мы совсем не можем работать. Пожалуйста, помогите!",
+    screenshot:false,
+    subjects:["Users cannot log in to the system","Question about the tariff plan","Wrong color of the Login button"],
+    answer:{subject:0, priority:"critical error", assignee:"anna", watchers:"dmitry", attach:false, response:"1 hour"},
+    whyPriority:"Nobody can work, so it is a critical error.",
+    reply:"Dear Mark,\nWe {have registered|register} your ticket. Our developer Anna {has found|find} the problem, and she is fixing it now."
+  },
+  { from:"Lisa, GreenFarm", subject:"Tariff plan",
+    body:"Hi!\nOur team is growing. We want to upgrade to a higher tariff plan. Is hourly payment possible? We would like a consultation.\nThank you!",
+    ru:"Привет!\nНаша команда растёт. Мы хотим перейти на более высокий тариф. Возможна ли почасовая оплата? Мы бы хотели консультацию.\nСпасибо!",
+    screenshot:false,
+    subjects:["Consultation about upgrading the tariff plan","Critical error in the app","The app is slow"],
+    answer:{subject:0, priority:"wish or request", assignee:"olga", watchers:"olga", attach:false, response:"3 days"},
+    whyPriority:"This is not an error. The client is asking for something: wish or request.",
+    reply:"Dear Lisa,\nOlga {has sent/has already sent|send} you our prices. {Have you chosen|you / choose} a plan yet?"
+  },
+  { from:"Pavel, CityBank", subject:"Reports",
+    body:"Hello.\nAfter the last release, the Reports page opens very slowly, about 2 minutes. We can still work, but it is a big problem for us. I have attached a screenshot.",
+    ru:"Здравствуйте.\nПосле последнего релиза страница отчётов открывается очень медленно, около 2 минут. Мы всё ещё можем работать, но для нас это большая проблема. Я прикрепил скриншот.",
+    screenshot:true,
+    subjects:["Reports page is slow after the release","Users cannot log in","Typo on the Reports page"],
+    answer:{subject:0, priority:"major error", assignee:"anna", watchers:"olga", attach:true, response:"4 hours"},
+    whyPriority:"People can work, but it is a big problem: major error.",
+    reply:"Dear Pavel,\nWe {have not fixed/haven't fixed|not / fix} the error yet. Our team {has estimated|estimate} the effort: 2 days."
+  },
+  { from:"Kate, FitLife", subject:"small mistake",
+    body:"Hi!\nThere is a small mistake in the mobile app: the word \"Setings\" has only one \"t\". It is not urgent. See my screenshot.",
+    ru:"Привет!\nВ мобильном приложении маленькая ошибка: в слове \"Setings\" только одна \"t\". Это не срочно. Посмотрите мой скриншот.",
+    screenshot:true,
+    subjects:["Typo in the mobile app","The app does not open","Upgrade to a new tariff plan"],
+    answer:{subject:0, priority:"minor error", assignee:"ivan", watchers:"olga", attach:true, response:"1 day"},
+    whyPriority:"It is a small typo and it is not urgent: minor error.",
+    reply:"Dear Kate,\nThank you for pointing out this mistake! Ivan {has fixed/has already fixed|fix} it. {Have you updated|you / update} the app?"
+  }
+];
+const WHY = {
+  subject:"The subject must describe the client's problem in a few words.",
+  assignee:"Look at the team roles: who works on tasks like this?",
+  watchers:"Rule: by default, Olga. Except for critical errors: then Dmitry.",
+  response:"Look at the table: the response time depends on the priority.",
+  attachYes:"There is a screenshot in the email. Attach it.",
+  attachNo:"There is no screenshot in the email."
+};
+const REVIEW = {subject:"subject", assignee:"assignee", watchers:"watchers / by default / except for", response:"response time", attach:"to attach a file"};
+// ================================================
+
+const $=id=>document.getElementById(id);
+let k, mistakes, review, startTime, finished, result, registered;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const norm=s=>s.toLowerCase().replace(/[’`]/g,"'").replace(/n't\b/g," not").replace(/\s+/g," ").replace(/[.?!]+$/,"").trim();
+function speak(t){if(!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function addReview(w){review[w]=(review[w]||0)+1}
+
+$("teamList").innerHTML=TEAM.map(t=>`<li><b>${t.name}</b> — ${esc(t.role)}</li>`).join("");
+
+function hud(){$("num").textContent=`${Math.min(k+1,CASES.length)} / ${CASES.length}`;$("mist").textContent=mistakes}
+
+function drawCase(){
+  hud();registered=false;
+  const c=CASES[k];
+  $("mail").innerHTML=`<h2>Inbox</h2>
+    <div class="mail-head">From: <b>${esc(c.from)}</b><br>Subject: <b>${esc(c.subject)}</b></div>
+    <div class="mail-body">${esc(c.body)}</div>
+    ${c.screenshot?`<div class="attach">📎 screenshot.png</div><br>`:""}
+    <button class="link" id="trBtn">Show translation</button><div class="ru" id="mailRu">${esc(c.ru)}</div>
+    <div><button class="link" id="listenBtn">🔊 Listen to the email</button></div>`;
+  $("trBtn").onclick=()=>$("mailRu").classList.toggle("show");
+  $("listenBtn").onclick=()=>speak(c.body);
+
+  const subj=shuffle(c.subjects.map((s,i)=>i));
+  $("ticket").innerHTML=`<h2>New ticket</h2>
+    <div class="tickethead"><span>#${1040+k} · task type: ticket</span><span>status:<span class="badge b-new" id="status">New</span></span></div>
+    <div class="field" id="f-subject"><label class="lbl" for="subject">subject</label>
+      <select id="subject"><option value="">— choose —</option>${subj.map(i=>`<option value="${i}">${esc(c.subjects[i])}</option>`).join("")}</select><div class="why"></div></div>
+    <div class="field"><label class="lbl" for="desc">description <i>(copied from the email)</i></label>
+      <textarea id="desc" readonly>${esc(c.body)}</textarea></div>
+    <div class="field" id="f-priority"><span class="lbl" style="display:block;font:500 13px 'JetBrains Mono',monospace;color:var(--muted);margin-bottom:5px">priority</span>
+      <div class="pills" role="radiogroup">${PRIORITIES.map(p=>`<label><input type="radio" name="prio" value="${p}"><span>${p}</span></label>`).join("")}</div><div class="why"></div></div>
+    <div class="field" id="f-assignee"><label class="lbl" for="assignee">assigned to <i>(assignee)</i></label>
+      <select id="assignee"><option value="">— choose —</option>${TEAM.map(t=>`<option value="${t.id}">${t.name}</option>`).join("")}</select><div class="why"></div></div>
+    <div class="field" id="f-watchers"><label class="lbl" for="watchers">watchers</label>
+      <select id="watchers"><option value="">— choose —</option>${WATCHERS.map(t=>`<option value="${t.id}">${t.name}</option>`).join("")}</select><div class="why"></div></div>
+    <div class="field" id="f-attach"><label class="check"><input type="checkbox" id="attach"> attach a file: screenshot.png</label><div class="why"></div></div>
+    <div class="field" id="f-response"><label class="lbl" for="response">response time</label>
+      <select id="response"><option value="">— choose —</option>${RESPONSE.map(r=>`<option>${r}</option>`).join("")}</select><div class="why"></div></div>
+    <button class="go" id="regBtn">Register ticket</button>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="reply" id="reply"></div>`;
+  $("regBtn").onclick=register;
+}
+
+function setField(id,ok,why){
+  const f=$("f-"+id);f.classList.toggle("bad",!ok);f.classList.toggle("good",ok);
+  f.querySelector(".why").textContent=ok?"":why;
+}
+function register(){
+  if(registered)return;
+  const c=CASES[k],a=c.answer;
+  const v={
+    subject:$("subject").value, priority:(document.querySelector('input[name="prio"]:checked')||{}).value||"",
+    assignee:$("assignee").value, watchers:$("watchers").value, attach:$("attach").checked, response:$("response").value
+  };
+  const empty=["subject","priority","assignee","watchers","response"].filter(x=>!v[x]);
+  if(empty.length){$("msg").className="msg bad";$("msg").textContent="Please fill in all the fields.";return}
+  let wrong=0;
+  const chk=(id,ok,why,rev)=>{setField(id,ok,why);if(!ok){wrong++;addReview(rev)}};
+  chk("subject",+v.subject===a.subject,WHY.subject,REVIEW.subject);
+  chk("priority",v.priority===a.priority,c.whyPriority,a.priority);
+  chk("assignee",v.assignee===a.assignee,WHY.assignee,REVIEW.assignee);
+  chk("watchers",v.watchers===a.watchers,WHY.watchers,REVIEW.watchers);
+  chk("attach",v.attach===a.attach,a.attach?WHY.attachYes:WHY.attachNo,REVIEW.attach);
+  chk("response",v.response===a.response,WHY.response,REVIEW.response);
+  mistakes+=wrong;hud();
+  if(wrong){$("msg").className="msg bad";$("msg").textContent=`✗ ${wrong} field(s) need changes. Fix the red fields.`;return}
+  registered=true;
+  $("ticket").querySelectorAll("select,input").forEach(x=>x.disabled=true);
+  $("regBtn").remove();
+  $("status").textContent="In progress";$("status").className="badge b-prog";
+  $("msg").className="msg good";$("msg").textContent="✓ Ticket registered. Now reply to the client.";
+  showReply();
+}
+
+function showReply(){
+  const c=CASES[k],gaps=[];
+  const html=esc(c.reply).replace(/\{(.+?)\|(.+?)\}/g,(m,ans,hint)=>{
+    const i=gaps.length;gaps.push({ans:ans.split("/"),hint});
+    return `<input type="text" class="gapin" data-i="${i}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(hint)}"> <span class="verb">(${esc(hint)})</span>`;
+  }).replace(/\n/g,"<br>");
+  const r=$("reply");r.classList.add("show");
+  r.innerHTML=`<h2>Reply to the client</h2>
+    <div class="pp">Present Perfect: <b>have / has + V3</b> (register → registered, find → found). Question: <b>Have you + V3…?</b> Negative: <b>have not / haven't + V3</b></div>
+    <p>${html}</p><button class="go" id="sendBtn">Send</button><div class="msg" id="msg2" aria-live="polite"></div>`;
+  const ins=[...r.querySelectorAll(".gapin")];
+  ins[0].focus();
+  ins.forEach(x=>x.addEventListener("keydown",e=>{if(e.key==="Enter")$("sendBtn").click()}));
+  $("sendBtn").onclick=()=>{
+    let wrong=0,empty=0;
+    ins.forEach((x,i)=>{
+      if(x.classList.contains("ok"))return;
+      const val=norm(x.value);if(!val){empty++;return}
+      if(gaps[i].ans.map(norm).includes(val)){x.classList.add("ok");x.classList.remove("no");x.readOnly=true}
+      else{wrong++;x.classList.add("no");addReview(gaps[i].hint+" → "+gaps[i].ans[0])}
+    });
+    const m=$("msg2");
+    if(empty){m.className="msg bad";m.textContent="Fill in all the gaps.";return}
+    if(wrong){mistakes+=wrong;hud();m.className="msg bad";m.textContent=`✗ ${wrong} mistake(s). Check have / has and the third form of the verb.`;return}
+    let full=c.reply;gaps.forEach(g=>{full=full.replace(/\{.+?\}/,g.ans[0])});
+    speak(full.replace(/\n/g," "));
+    $("status").textContent="Waiting for client";$("status").className="badge b-wait";
+    m.className="msg good";m.textContent="✓ Sent!";
+    $("sendBtn").remove();
+    $("queue").insertAdjacentHTML("beforeend",`<div><span>#${1040+k} ${esc(c.subjects[c.answer.subject])}</span><span style="color:var(--green)">✓</span></div>`);
+    const nb=document.createElement("button");nb.className="go";nb.style.marginTop="12px";
+    nb.textContent=k+1<CASES.length?"Next ticket →":"Finish shift";
+    nb.onclick=()=>{k++;if(k<CASES.length)drawCase();else finish(false)};
+    r.appendChild(nb);nb.focus();
+  };
+}
+
+// ---------- результат и код ----------
+const SALT="ticket-sim-2026";
+function makeCode(name,d,m){
+  const str=[SALT,name.trim().toLowerCase(),d,m].join("|");let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function buildReport(){
+  const name=$("studentName").value.trim()||"(no name)",r=result;
+  $("report").textContent=`SupportDesk: Ticket Simulator\nName: ${name}\nTickets: ${r.d}/${CASES.length}\nMistakes: ${r.m}\nTime: ${r.t}`+
+    (r.rev.length?`\nWords to review: ${r.rev.join("; ")}`:"")+`\nCode: ${makeCode(name,r.d,r.m)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  const d=early?k:CASES.length;
+  result={d,m:mistakes,t:fmt(Math.floor((Date.now()-startTime)/1000)),rev:Object.entries(review).sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
+  if(!early){$("grid").innerHTML=`<section class="card done" style="grid-column:1/-1"><h3>Shift finished ✓</h3><p>You have registered ${CASES.length} tickets and replied to all clients. Great job!</p></section>`}
+  buildReport();$("result").classList.add("show");$("result").scrollIntoView({behavior:"smooth"});
+}
+$("endBtn").onclick=()=>{if(!finished&&confirm("Finish and get your result?"))finish(true)};
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Copied"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Text selected, press Ctrl+C"}
+};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tDone").split("/")[0].trim(),v("tMist"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">The code is correct. The result has not been changed.</span>':'<span class="bad-t">The code does not match. Check that you have entered the data exactly as in the result.</span>';
+};
+
+k=0;mistakes=0;review={};startTime=Date.now();finished=false;result=null;
+drawCase();
+</script>
+</body>
+</html>
