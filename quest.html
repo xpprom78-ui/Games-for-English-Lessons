@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest: The Mystery of Ashford Manor</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall:#1E3B34; --wall2:#244840; --paper:#F3E8D2; --paper2:#E9DAB9;
+    --ink:#2B2118; --muted:#6E5E4A; --brass:#B8893B; --wax:#9E2B25; --good:#2E6B3A;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--ink);font-family:Manrope,system-ui,sans-serif;
+    background:var(--wall);
+    background-image:radial-gradient(circle at 50% 50%,var(--wall2) 0 2px,transparent 3px);
+    background-size:28px 28px;
+  }
+  .page{max-width:820px;margin:0 auto;padding:28px 16px 48px}
+  header{color:var(--paper);margin-bottom:18px}
+  h1{font-family:"Cormorant Garamond",serif;font-weight:700;font-size:46px;line-height:1.05;margin:0}
+  header p{margin:6px 0 0;color:#CFC3A8;max-width:60ch}
+
+  .track{display:flex;gap:6px;margin:18px 0 10px}
+  .door{flex:1;text-align:center;font-size:12px;color:#CFC3A8;padding-top:30px;position:relative}
+  .door::before{
+    content:"";position:absolute;top:0;left:50%;translate:-50% 0;width:20px;height:26px;
+    border:2px solid #5E7C73;border-bottom:none;border-radius:10px 10px 0 0;
+  }
+  .door.now{color:var(--paper);font-weight:800}
+  .door.now::before{border-color:var(--paper)}
+  .door.done{color:var(--brass)}
+  .door.done::before{border-color:var(--brass);background:var(--brass)}
+
+  .inv{display:flex;align-items:center;gap:10px;color:var(--paper);margin-bottom:18px;flex-wrap:wrap}
+  .inv span.l{font-size:14px;color:#CFC3A8}
+  .slot{
+    width:42px;height:50px;display:flex;align-items:center;justify-content:center;
+    font:700 28px "Cormorant Garamond",serif;color:var(--ink);background:#8C7A55;border-radius:4px;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
+  }
+  .slot.got{background:var(--brass);animation:shine .8s}
+  @keyframes shine{0%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+  .sheet{
+    background:var(--paper);border-radius:3px;padding:30px 32px 28px;position:relative;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+    background-image:linear-gradient(180deg,rgba(255,255,255,.35),transparent 40%),
+      radial-gradient(ellipse at 100% 100%,var(--paper2),transparent 55%);
+  }
+  .seal{
+    position:absolute;top:-18px;right:26px;width:54px;height:54px;border-radius:50%;
+    background:var(--wax);color:var(--paper);display:flex;align-items:center;justify-content:center;
+    font:700 22px "Cormorant Garamond",serif;box-shadow:0 3px 0 #6E1C18;
+  }
+  h2{font-family:"Cormorant Garamond",serif;font-size:34px;margin:0 0 10px;line-height:1.1}
+  .story{font-family:"Cormorant Garamond",serif;font-size:22px;line-height:1.45;margin:0 0 6px}
+  .ru{font-size:15px;color:var(--muted);line-height:1.55;margin:4px 0 0;display:none}
+  .ru.show{display:block}
+  .linkbtn{background:none;border:none;padding:0;color:var(--wax);font:600 14px Manrope,sans-serif;text-decoration:underline;cursor:pointer}
+  .task{margin:22px 0 14px;padding:10px 14px;border-left:4px solid var(--brass);background:rgba(184,137,59,.12);font-weight:600}
+
+  button{font:600 15px Manrope,sans-serif;padding:10px 16px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:var(--paper)}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--wax);outline-offset:2px}
+  button.main{background:var(--wax);border-color:var(--wax);color:var(--paper)}
+  button.main:hover{background:var(--ink);border-color:var(--ink)}
+  button:disabled{opacity:.4;cursor:default}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+
+  /* записка с пропусками */
+  .note{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px;line-height:2;white-space:pre-line;
+    background:#FBF5E8;padding:16px 20px;border:1px solid var(--paper2);transform:rotate(-.6deg)}
+  .gap{font:600 17px Manrope,sans-serif;font-style:normal;min-width:120px;padding:2px 10px;margin:0 3px;border:none;
+    border-bottom:2px dashed var(--ink);border-radius:0;background:rgba(184,137,59,.15)}
+  .gap.active{background:rgba(158,43,37,.18);border-bottom-color:var(--wax)}
+  .gap.ok{background:rgba(46,107,58,.18);border-bottom:2px solid var(--good);color:var(--good)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .chip{background:#FBF5E8;border:2px solid var(--muted);font-weight:800}
+  .chip.used{opacity:.3;pointer-events:none}
+
+  /* сопоставление */
+  .match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .match button{width:100%;text-align:left;background:#FBF5E8;border-color:var(--muted);font-weight:800}
+  .match button.sel{border-color:var(--wax);background:rgba(158,43,37,.15)}
+  .match button.ok{border-color:var(--good);color:var(--good);background:rgba(46,107,58,.12);pointer-events:none}
+  .match button.hint{outline:3px dashed var(--brass);outline-offset:2px}
+
+  /* анаграмма */
+  .clue{font-family:"Cormorant Garamond",serif;font-size:24px;margin:0 0 4px}
+  .clue small{font-family:Manrope,sans-serif;font-size:14px;color:var(--muted);display:block}
+  .built{display:flex;gap:6px;flex-wrap:wrap;min-height:52px;margin:14px 0 10px}
+  .built span,.tiles button{width:44px;height:48px;display:inline-flex;align-items:center;justify-content:center;font:800 22px Manrope,sans-serif;text-transform:uppercase}
+  .built span{border-bottom:3px solid var(--ink)}
+  .built span.given{color:var(--good)}
+  .tiles{display:flex;gap:6px;flex-wrap:wrap}
+  .tiles button{padding:0;background:#FBF5E8;border-color:var(--muted)}
+  .tiles button.used{visibility:hidden}
+
+  /* ввод */
+  .typerow{margin-bottom:16px}
+  .typerow input{font:600 18px Manrope,sans-serif;padding:8px 10px;border:none;border-bottom:2px solid var(--ink);background:#FBF5E8;width:100%;max-width:340px;margin-top:6px}
+  .typerow input.ok{border-bottom-color:var(--good);color:var(--good);background:rgba(46,107,58,.1)}
+
+  /* выбор */
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .opts button{background:#FBF5E8;border-color:var(--muted);font-weight:800}
+  .opts button.no{opacity:.3;text-decoration:line-through;pointer-events:none}
+
+  /* кодовый замок */
+  .display{display:flex;gap:8px;margin:10px 0 14px}
+  .display span{width:52px;height:62px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--brass);font:700 34px "Cormorant Garamond",serif;border-radius:4px}
+  .keys{display:grid;grid-template-columns:repeat(3,64px);gap:8px}
+  .keys button{height:52px;padding:0;font-size:20px;font-weight:800}
+
+  .found{margin-top:20px;padding:14px 16px;border:2px solid var(--brass);background:rgba(184,137,59,.14)}
+  .found .story{font-size:21px}
+  .shake{animation:shake .4s}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}}
+  .msg{min-height:22px;font-weight:700;margin-top:10px}
+  .msg.bad{color:var(--wax)}.msg.good{color:var(--good)}
+  .counter{font-size:14px;color:var(--muted);margin-bottom:8px}
+
+  .result,.teacher{margin-top:22px;padding:16px 18px;background:var(--paper);border-radius:3px;display:none}
+  .result.show,.teacher.show{display:block}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0;background:#FBF5E8}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#FBF5E8;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--brass)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok-t{color:var(--good);font-weight:800}.bad-t{color:var(--wax);font-weight:800}
+  .foot{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+  .foot button{color:var(--paper);border-color:#5E7C73}
+  .foot button:hover{background:var(--paper);color:var(--ink)}
+
+  @media (max-width:600px){
+    h1{font-size:36px}.sheet{padding:26px 18px 22px}.story{font-size:20px}
+    .match,.opts{grid-template-columns:1fr}.door{font-size:10px}
+    .note{font-size:19px;padding:12px}
+  }
+  @media (prefers-reduced-motion:reduce){.slot.got,.shake{animation:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>The Mystery of Ashford Manor</h1>
+    <p>A quest with 20 words. Go through five rooms, find four code numbers and open the safe with the will.</p>
+  </header>
+
+  <div class="track" id="track"></div>
+  <div class="inv"><span class="l">Code numbers:</span><div id="slots" style="display:flex;gap:8px"></div></div>
+
+  <main class="sheet" id="sheet"></main>
+
+  <div class="result" id="result">
+    <h2 id="resTitle">Mystery solved!</h2>
+    <div>Write your name, copy your result and send it to your teacher as your answer.</div>
+    <input id="studentName" placeholder="First and last name" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Copy my result</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tMist" placeholder="Ошибки" size="7">
+      <input id="tHints" placeholder="Подсказки" size="8">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+
+  <div class="foot">
+    <button id="endBtn">Finish and get my code</button>
+    <button id="restartBtn">Start again</button>
+  </div>
+</div>
+
+<script>
+// ================== СОДЕРЖАНИЕ КВЕСТА ==================
+const INTRO = {
+  en:"Lord Edmund Ashford has died. Tonight his family has gathered at Ashford Manor. His will is locked in a safe in his study, and without it the family cannot settle matters. The old butler, Mr Pim, whispers to you: “Only a person of honor can open the safe. The code has four numbers. His Lordship hid them in the house.”",
+  ru:"Лорд Эдмунд Эшфорд умер. Сегодня вечером его семья собралась в поместье Эшфорд. Его завещание заперто в сейфе в кабинете, и без него семья не может уладить вопросы. Старый дворецкий, мистер Пим, шепчет вам: «Открыть сейф сможет только человек чести. В коде четыре цифры. Его светлость спрятал их в доме»."
+};
+const ROOMS = [
+  { name:"Hall", type:"gap", digit:7,
+    en:"The hall is full of candles and quiet guests. Mr Pim is writing a note for them, but his hands are shaking. He asks you to help him finish it.",
+    ru:"Холл полон свечей и тихих гостей. Мистер Пим пишет для них записку, но у него дрожат руки. Он просит вас помочь её закончить.",
+    task:"Click a gap, then click the right word. When you are ready, click Check.",
+    note:"Dear guests,\nTonight we hold [0] for Lord Ashford. He was a man of [1] who always kept his promises. Even when he was very ill, he lived with [2]. He was [3] about three things: music, books and his garden.\n— Mr Pim",
+    answers:["a wake","honor","dignity","passionate"], extra:["surgeon","vary"],
+    found:{en:"Under the note you find an old card with the number 7.", ru:"Под запиской вы находите старую карточку с цифрой 7."} },
+  { name:"Library", type:"match", digit:3,
+    en:"The library shows Lord Ashford's refined taste: old maps, rare books and a golden globe. On the desk lies a torn page from his dictionary.",
+    ru:"Библиотека показывает изысканный вкус лорда Эшфорда: старые карты, редкие книги и золотой глобус. На столе лежит вырванная страница из его словаря.",
+    task:"Match the English words with their translations to open the secret shelf.",
+    pairs:[["refined taste","изысканный вкус"],["distinguish","различать"],["rely on","полагаться на"],["willing to consider","готовы рассмотреть"]],
+    found:{en:"The shelf slides open. On the wall behind it, someone has painted the number 3.", ru:"Полка отъезжает в сторону. На стене за ней кто-то нарисовал цифру 3."} },
+  { name:"Kitchen", type:"scramble", digit:9,
+    en:"Something in the kitchen smells terrible! The cook, Mrs Bell, is holding her nose. “Help me with my old recipe book,” she says, “and I'll tell you a secret.”",
+    ru:"На кухне что-то ужасно пахнет! Кухарка, миссис Белл, зажимает нос. «Помогите мне с моей старой книгой рецептов, — говорит она, — и я открою вам секрет»."
+    , task:"Build the word from the letters. Click the letters in the right order.",
+    items:[
+      {word:"stinks", ru:"воняет", clue:"Something in this kitchen ___!"},
+      {word:"neutralize", ru:"нейтрализовать", clue:"Lemon juice can ___ a bad smell."},
+      {word:"surgeon", ru:"хирург", clue:"A famous ___ once operated on Lord Ashford's heart."},
+      {word:"endure", ru:"терпеть", clue:"Mrs Bell can't ___ this smell any longer."}
+    ],
+    found:{en:"Mrs Bell smiles: “His Lordship always hid things in the bread box.” Inside there is a note with the number 9.", ru:"Миссис Белл улыбается: «Его светлость всегда прятал вещи в хлебнице». Внутри лежит записка с цифрой 9."} },
+  { name:"Greenhouse", type:"type", digit:2,
+    en:"In the greenhouse, the gardener Tom is sitting among the flowers. He knew Lord Ashford for forty years. “I'll tell you his story,” he says, “but you must finish my sentences.”",
+    ru:"В оранжерее среди цветов сидит садовник Том. Он знал лорда Эшфорда сорок лет. «Я расскажу вам его историю, — говорит он, — но вы должны закончить мои предложения»."
+    , task:"Type the English word. There is a hint in Russian under each sentence.",
+    items:[
+      {answer:["rescuers"], ru:"спасатели", clue:"Forty years ago, mountain ___ found Lord Ashford in the snow."},
+      {answer:["looks out for"], ru:"заботится о", clue:"Tom still ___ every plant in this greenhouse."},
+      {answer:["the well-being","the wellbeing","the well being"], ru:"благополучие", clue:"His Lordship cared about ___ of everyone in the village."},
+      {answer:["empathizes","empathises"], ru:"сопереживает", clue:"Tom ___ with the family: he understands their pain."}
+    ],
+    found:{en:"Tom gives you a small flower pot and a key. On the bottom of the pot it says: 2.", ru:"Том даёт вам маленький цветочный горшок и ключ. На дне горшка написано: 2."} },
+  { name:"Study", type:"choose", digit:null,
+    en:"The key opens the study. Inside, two cousins are arguing about the house. Nobody backs down. To calm them down, explain what their words really mean.",
+    ru:"Ключ открывает кабинет. Внутри двое кузенов спорят о доме. Никто не отступает. Чтобы их успокоить, объясните, что на самом деле значат их слова.",
+    task:"Choose the word that matches the explanation.",
+    items:[
+      {def:"to be different from each other", answer:"vary"},
+      {def:"stops arguing and accepts the other person's idea", answer:"backs down"},
+      {def:"to solve problems or disagreements", answer:"settle matters"},
+      {def:"rules that limit what you can do", answer:"restrictions"}
+    ] }
+];
+const FINALE = {
+  en:"The safe opens with a soft click. Inside is the will: “I leave my house to the village hospital, where a young surgeon once saved my life, and to the mountain rescuers. Mr Pim, Mrs Bell and Tom always looked out for me: they may live here as long as they want. My dear family, please stop arguing. Live with dignity and honor.” The cousins look at each other and shake hands. The mystery is solved!",
+  ru:"Сейф открывается с тихим щелчком. Внутри завещание: «Я оставляю свой дом деревенской больнице, где молодой хирург когда-то спас мне жизнь, и горным спасателям. Мистер Пим, миссис Белл и Том всегда заботились обо мне: они могут жить здесь сколько захотят. Моя дорогая семья, пожалуйста, перестаньте спорить. Живите с достоинством и честью». Кузены смотрят друг на друга и пожимают руки. Тайна раскрыта!"
+};
+// =======================================================
+
+const $=id=>document.getElementById(id);
+const sheet=$("sheet");
+const CODE=ROOMS.filter(r=>r.digit!==null).map(r=>r.digit);
+let room, digits, mistakes, hints, errWords, startTime, result, finished, state;
+
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>s.toLowerCase().replace(/[’']/g,"'").replace(/\s+/g," ").trim();
+
+function speak(t){if(!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-GB";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function miss(word){mistakes++;errWords[word]=(errWords[word]||0)+1}
+function shake(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+function msg(text,kind){const m=$("msg");if(m){m.textContent=text;m.className="msg "+(kind||"")}}
+
+function drawTrack(){
+  $("track").innerHTML=ROOMS.map((r,i)=>`<div class="door ${i<room?"done":i===room?"now":""}">${esc(r.name)}</div>`).join("");
+  $("slots").innerHTML=CODE.map((d,i)=>`<div class="slot ${digits[i]!=null?"got":""}">${digits[i]!=null?digits[i]:"?"}</div>`).join("");
+}
+function storyBlock(en,ru){
+  return `<p class="story">${esc(en)}</p>
+    <button class="linkbtn" onclick="this.nextElementSibling.classList.toggle('show')">Show translation</button>
+    <p class="ru">${esc(ru)}</p>`;
+}
+
+// ---------- экраны ----------
+function showIntro(){
+  sheet.innerHTML=`<div class="seal">A</div><h2>An Evening at the Manor</h2>${storyBlock(INTRO.en,INTRO.ru)}
+    <div class="actions"><button class="main" id="go">Enter the manor</button>
+    <button id="listen">🔊 Listen</button></div>`;
+  $("go").onclick=()=>{room=0;showRoom()};
+  $("listen").onclick=()=>speak(INTRO.en);
+}
+function showRoom(){
+  drawTrack();
+  const r=ROOMS[room];
+  sheet.innerHTML=`<div class="seal">${room+1}</div><h2>${esc(r.name)}</h2>${storyBlock(r.en,r.ru)}
+    <div class="task">${esc(r.task)}</div><div id="puzzle"></div><div class="msg" id="msg" aria-live="polite"></div>
+    <div class="actions" id="acts"><button id="hintBtn">Hint</button></div>`;
+  $("hintBtn").onclick=()=>{hints++;state.hint()};
+  ({gap:gapRoom,match:matchRoom,scramble:scrambleRoom,type:typeRoom,choose:chooseRoom})[r.type](r);
+  sheet.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function roomSolved(){
+  const r=ROOMS[room];
+  $("hintBtn").remove();
+  if(r.digit===null){keypad();return}
+  digits[CODE.indexOf(r.digit)]=r.digit;drawTrack();
+  const f=document.createElement("div");f.className="found";
+  f.innerHTML=storyBlock(r.found.en,r.found.ru)+`<div class="actions"><button class="main" id="next">Next: ${esc(ROOMS[room+1].name)}</button></div>`;
+  $("puzzle").after(f);msg("","");
+  $("next").onclick=()=>{room++;showRoom()};
+  $("next").focus();
+}
+
+// ---------- 1. записка с пропусками ----------
+function gapRoom(r){
+  const p=$("puzzle");
+  const html=esc(r.note).replace(/\[(\d)\]/g,(m,i)=>`<button class="gap" data-i="${i}">&nbsp;</button>`);
+  const words=shuffle([...r.answers,...r.extra]);
+  p.innerHTML=`<div class="note">${html}</div><div class="chips">${words.map(w=>`<button class="chip" data-w="${esc(w)}">${esc(w)}</button>`).join("")}</div>`;
+  $("acts").insertAdjacentHTML("afterbegin",`<button class="main" id="check">Check</button>`);
+  const fill={};let active=0;
+  const gaps=[...p.querySelectorAll(".gap")];
+  const mark=()=>gaps.forEach((g,i)=>{g.classList.toggle("active",i===active&&!g.classList.contains("ok"));g.innerHTML=fill[i]?esc(fill[i]):"&nbsp;"});
+  const syncChips=()=>p.querySelectorAll(".chip").forEach(c=>c.classList.toggle("used",Object.values(fill).includes(c.dataset.w)));
+  gaps.forEach((g,i)=>g.onclick=()=>{if(g.classList.contains("ok"))return;if(fill[i]&&active===i){delete fill[i];syncChips()}active=i;mark()});
+  p.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(active==null||gaps[active].classList.contains("ok"))return;
+    fill[active]=c.dataset.w;syncChips();
+    const nxt=gaps.findIndex((g,i)=>!fill[i]&&!g.classList.contains("ok"));active=nxt<0?active:nxt;mark();
+  });
+  $("check").onclick=()=>{
+    let wrong=0;
+    gaps.forEach((g,i)=>{
+      if(g.classList.contains("ok"))return;
+      if(fill[i]===r.answers[i]){g.classList.add("ok")}
+      else{if(fill[i]){wrong++;miss(r.answers[i])}delete fill[i];shake(g)}
+    });
+    syncChips();
+    const left=gaps.findIndex(g=>!g.classList.contains("ok"));
+    if(left<0){$("check").remove();speak(r.note.replace(/\[(\d)\]/g,(m,i)=>r.answers[i]).replace("— Mr Pim",""));roomSolved();return}
+    active=left;mark();
+    msg(wrong?`Wrong words: ${wrong}. They have been removed, try again.`:"Fill in all the gaps.","bad");
+  };
+  state={hint:()=>{
+    const i=gaps.findIndex(g=>!g.classList.contains("ok"));if(i<0)return;
+    Object.keys(fill).forEach(k=>{if(fill[k]===r.answers[i])delete fill[k]});
+    fill[i]=r.answers[i];gaps[i].classList.add("ok");syncChips();
+    const nxt=gaps.findIndex(g=>!g.classList.contains("ok"));active=nxt<0?0:nxt;mark();
+    if(nxt<0){$("check").click()}
+  }};
+  mark();
+}
+
+// ---------- 2. сопоставление ----------
+function matchRoom(r){
+  const p=$("puzzle");
+  const left=shuffle(r.pairs.map((x,i)=>i)),right=shuffle(r.pairs.map((x,i)=>i));
+  p.innerHTML=`<div class="match"><div style="display:grid;gap:10px">${left.map(i=>`<button data-side="en" data-i="${i}">${esc(r.pairs[i][0])}</button>`).join("")}</div>
+    <div style="display:grid;gap:10px">${right.map(i=>`<button data-side="ru" data-i="${i}">${esc(r.pairs[i][1])}</button>`).join("")}</div></div>`;
+  let sel={en:null,ru:null},done=0;
+  const btn=(side,i)=>p.querySelector(`[data-side="${side}"][data-i="${i}"]`);
+  const tryPair=()=>{
+    if(sel.en==null||sel.ru==null)return;
+    const a=btn("en",sel.en),b=btn("ru",sel.ru);
+    if(sel.en===sel.ru){[a,b].forEach(x=>{x.classList.remove("sel","hint");x.classList.add("ok")});speak(r.pairs[sel.en][0]);done++;msg("","")}
+    else{miss(r.pairs[sel.en][0]);shake(a);shake(b);a.classList.remove("sel");b.classList.remove("sel");msg("Not a pair. Try another one.","bad")}
+    sel={en:null,ru:null};
+    if(done===r.pairs.length)roomSolved();
+  };
+  p.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    const s=b.dataset.side;p.querySelectorAll(`[data-side="${s}"]`).forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");sel[s]=+b.dataset.i;tryPair();
+  });
+  state={hint:()=>{
+    const i=r.pairs.findIndex((x,k)=>!btn("en",k).classList.contains("ok"));if(i<0)return;
+    btn("en",i).classList.add("hint");btn("ru",i).classList.add("hint");
+  }};
+}
+
+// ---------- 3. анаграммы ----------
+function scrambleRoom(r){
+  let k=0,built=[],given=0;
+  const draw=()=>{
+    const it=r.items[k],letters=it.word.split("");
+    let order=shuffle(letters.map((c,i)=>i));
+    if(order.every((v,i)=>v===i))order.reverse();
+    $("puzzle").innerHTML=`<div class="counter">Word ${k+1} of ${r.items.length}</div>
+      <p class="clue">${esc(it.clue)}<small>${esc(it.ru)}</small></p>
+      <div class="built" id="built"></div><div class="tiles" id="tiles">${order.map(i=>`<button data-i="${i}">${esc(letters[i])}</button>`).join("")}</div>
+      <div class="actions"><button id="back">← Delete a letter</button></div>`;
+    built=[];given=0;render();
+    $("tiles").querySelectorAll("button").forEach(b=>b.onclick=()=>{built.push(b);b.classList.add("used");render();check()});
+    $("back").onclick=()=>{if(built.length>given){built.pop().classList.remove("used");render()}};
+  };
+  const render=()=>{
+    const it=r.items[k];
+    $("built").innerHTML=it.word.split("").map((c,i)=>`<span class="${i<given?"given":""}">${built[i]?esc(built[i].textContent):""}</span>`).join("");
+  };
+  const check=()=>{
+    const it=r.items[k];
+    if(built.length<it.word.length)return;
+    if(built.map(b=>b.textContent).join("")===it.word){
+      speak(it.clue.replace("___",it.word));msg("Correct!","good");k++;
+      if(k<r.items.length)setTimeout(()=>{msg("","");draw()},700);
+      else{$("puzzle").innerHTML=`<p class="clue">${r.items.map(i=>esc(i.clue.replace("___",i.word))).join("<br>")}</p>`;roomSolved()}
+    }else{
+      miss(it.word);shake($("built"));msg("That's not the word. Try again.","bad");
+      setTimeout(()=>{built.slice(given).forEach(b=>b.classList.remove("used"));built=built.slice(0,given);render()},450);
+    }
+  };
+  state={hint:()=>{
+    const it=r.items[k];if(!it||given>=it.word.length-1)return;
+    built.slice(given).forEach(b=>b.classList.remove("used"));built=built.slice(0,given);
+    const need=it.word[given];
+    const tile=[...$("tiles").querySelectorAll("button:not(.used)")].find(b=>b.textContent===need);
+    tile.classList.add("used");built.push(tile);given++;render();
+  }};
+  draw();
+}
+
+// ---------- 4. вписать слово ----------
+function typeRoom(r){
+  const p=$("puzzle");
+  p.innerHTML=r.items.map((it,i)=>`<div class="typerow"><p class="clue">${esc(it.clue)}<small>${esc(it.ru)}</small></p>
+    <input id="in${i}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Answer ${i+1}"></div>`).join("");
+  $("acts").insertAdjacentHTML("afterbegin",`<button class="main" id="check">Check</button>`);
+  const inputs=r.items.map((it,i)=>$("in"+i));
+  const okAt=i=>inputs[i].classList.contains("ok");
+  inputs.forEach(el=>el.addEventListener("keydown",e=>{if(e.key==="Enter")$("check").click()}));
+  $("check").onclick=()=>{
+    let wrong=0,empty=0;
+    r.items.forEach((it,i)=>{
+      if(okAt(i))return;const v=norm(inputs[i].value);
+      if(!v){empty++;return}
+      if(it.answer.map(norm).includes(v)){inputs[i].classList.add("ok");inputs[i].readOnly=true;inputs[i].value=it.answer[0]}
+      else{wrong++;miss(it.answer[0]);shake(inputs[i])}
+    });
+    if(inputs.every((x,i)=>okAt(i))){$("check").remove();speak(r.items.map(it=>it.clue.replace("___",it.answer[0])).join(" "));roomSolved();return}
+    msg(wrong?`Mistakes: ${wrong}. Check your spelling.`:empty?"Fill in all the lines.":"","bad");
+  };
+  state={hint:()=>{
+    const i=inputs.findIndex((x,k)=>!okAt(k));if(i<0)return;
+    const a=r.items[i].answer[0],cur=norm(inputs[i].value);
+    let n=0;while(n<cur.length&&cur[n]===a[n])n++;
+    inputs[i].value=a.slice(0,Math.min(a.length,Math.max(n+2,3)));inputs[i].focus();
+  }};
+}
+
+// ---------- 5. выбор по объяснению ----------
+function chooseRoom(r){
+  let k=0;
+  const opts=r.items.map(x=>x.answer);
+  const draw=()=>{
+    const it=r.items[k];
+    $("puzzle").innerHTML=`<div class="counter">Explanation ${k+1} of ${r.items.length}</div>
+      <p class="clue">“${esc(it.def)}”</p><div class="opts">${shuffle(opts).map(o=>`<button data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+    $("puzzle").querySelectorAll(".opts button").forEach(b=>b.onclick=()=>{
+      if(b.dataset.o===it.answer){speak(it.answer);k++;msg("Correct!","good");
+        if(k<r.items.length)setTimeout(()=>{msg("","");draw()},600);else setTimeout(roomSolved,600)}
+      else{miss(it.answer);b.classList.add("no");msg("No, that means something else.","bad")}
+    });
+  };
+  state={hint:()=>{
+    const it=r.items[k];if(!it)return;
+    const w=[...$("puzzle").querySelectorAll(".opts button:not(.no)")].filter(b=>b.dataset.o!==it.answer);
+    if(w.length>1)w[Math.floor(Math.random()*w.length)].classList.add("no");
+  }};
+  draw();
+}
+
+// ---------- кодовый замок ----------
+function keypad(){
+  let entry="";
+  $("puzzle").innerHTML=`<div class="found"><p class="story">The cousins stop arguing. Now it's time to open the safe.</p></div>
+    <p class="clue" style="margin-top:18px">Enter the safe code: the four numbers you found.</p>
+    <div class="display" id="disp"></div>
+    <div class="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button id="clr">⌫</button><button data-n="0">0</button><button class="main" id="ent">OK</button></div>`;
+  $("acts").remove();
+  const show=()=>$("disp").innerHTML=CODE.map((d,i)=>`<span>${entry[i]||""}</span>`).join("");
+  $("puzzle").querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{if(entry.length<CODE.length){entry+=b.dataset.n;show()}});
+  $("clr").onclick=()=>{entry=entry.slice(0,-1);show()};
+  $("ent").onclick=()=>{
+    if(entry===CODE.join("")){ending()}
+    else{mistakes++;shake($("disp"));msg("The safe is still locked. Look at your code numbers at the top: they go in the order of the rooms.","bad");entry="";show()}
+  };
+  show();
+}
+function ending(){
+  room=ROOMS.length;drawTrack();
+  sheet.innerHTML=`<div class="seal">✓</div><h2>The Will</h2>${storyBlock(FINALE.en,FINALE.ru)}
+    <div class="actions"><button id="listen">🔊 Listen</button></div>`;
+  $("listen").onclick=()=>speak(FINALE.en);
+  finish(false);
+}
+
+// ---------- результат и код ----------
+const SALT="quest-ashford-2026";
+function makeCode(name,m,h){
+  const str=[SALT,name.trim().toLowerCase(),m,h].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(no name)",r=result;
+  $("report").textContent=`Quest: The Mystery of Ashford Manor\nName: ${name}\nCompleted: ${r.status}\nMistakes: ${r.m}\nHints: ${r.h}\nTime: ${r.time}`+
+    (r.hard.length?`\nWords to review: ${r.hard.join(", ")}`:"")+`\nCode: ${makeCode(name,r.m,r.h)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  const hard=Object.entries(errWords).sort((a,b)=>b[1]-a[1]).map(([w])=>w);
+  result={m:mistakes,h:hints,hard,time:fmt(Math.floor((Date.now()-startTime)/1000)),
+    status:early?`${Math.min(room,ROOMS.length)} of ${ROOMS.length} rooms`:"the whole quest"};
+  $("resTitle").textContent=early?"Quest not finished":"Mystery solved!";
+  buildReport();$("result").classList.add("show");
+  if(!early)setTimeout(()=>$("result").scrollIntoView({behavior:"smooth",block:"nearest"}),400);
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Copied"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Text selected, press Ctrl+C"}
+};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Finish the quest and get your result?")){finish(true);$("result").scrollIntoView({behavior:"smooth"})}};
+$("restartBtn").onclick=()=>{if(confirm("Start the quest again?"))start()};
+
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tMist"),v("tHints"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">Код верный, результат не изменён.</span>':'<span class="bad-t">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+function start(){
+  room=0;digits=[];mistakes=0;hints=0;errWords={};startTime=Date.now();result=null;finished=false;
+  $("result").classList.remove("show");$("copied").textContent="";
+  drawTrack();showIntro();
+}
+start();
+</script>
+</body>
+</html>
