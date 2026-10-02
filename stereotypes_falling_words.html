@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Падающие слова: Stereotypes</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:880px;margin:0 auto;padding:24px 16px 40px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:52px;line-height:1;margin:0 0 4px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 16px;max-width:62ch}
+
+  .hud{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .stat{font-family:Caveat,cursive;font-size:30px;color:var(--ink)}
+  .lives{font-size:22px;letter-spacing:3px;color:var(--margin)}
+  .progress{flex:1;min-width:140px;height:10px;border:2px solid var(--ink);background:#fff;border-radius:6px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+
+  .field{
+    position:relative;height:540px;background:rgba(255,255,255,.75);border:2px solid var(--ink);
+    box-shadow:6px 6px 0 var(--ink);overflow:hidden;touch-action:manipulation;user-select:none;
+  }
+  .lane-line{position:absolute;top:0;bottom:92px;width:1px;background:var(--grid)}
+  .ground{position:absolute;left:0;right:0;bottom:92px;height:3px;background:var(--margin);opacity:.7}
+  .target{
+    position:absolute;left:0;right:0;bottom:0;height:92px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;background:var(--ink);color:#fff;text-align:center;padding:0 12px;
+  }
+  .target small{font-size:13px;opacity:.75}
+  .target strong{font-family:Caveat,cursive;font-size:40px;line-height:1.05}
+
+  .word{
+    position:absolute;top:0;padding:10px 8px;min-height:48px;display:flex;align-items:center;justify-content:center;
+    text-align:center;font:800 17px/1.15 Manrope,sans-serif;color:var(--text);background:#FFF6B8;
+    border:2px solid var(--text);border-radius:3px;cursor:pointer;will-change:transform;
+    box-shadow:3px 3px 0 rgba(38,48,59,.25);
+  }
+  .word .key{position:absolute;top:2px;left:5px;font-size:11px;color:var(--muted);font-weight:600}
+  .word:hover{background:#FFE970}
+  .word.right{background:#B8F2A0;border-color:var(--good);animation:pop .35s forwards}
+  .word.wrong{background:#FFC2C2;border-color:var(--margin);animation:shake .4s forwards}
+  .word.reveal{background:#B8F2A0;border-color:var(--good);outline:3px dashed var(--good);outline-offset:3px}
+  @keyframes pop{to{opacity:0;scale:1.35}}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}100%{opacity:0}}
+
+  .overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;background:rgba(251,252,248,.94);text-align:center;padding:24px;z-index:5;
+  }
+  .overlay.hidden{display:none}
+  .overlay h2{font-family:Caveat,cursive;font-size:46px;color:var(--ink);margin:0}
+  .overlay p{margin:0;max-width:46ch;color:var(--text)}
+  .toast{position:absolute;left:50%;top:40%;translate:-50% 0;font-family:Caveat,cursive;font-size:38px;pointer-events:none;opacity:0;z-index:4}
+  .toast.show{animation:toast .9s}
+  @keyframes toast{0%{opacity:0;translate:-50% 10px}20%{opacity:1}100%{opacity:0;translate:-50% -30px}}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+  button{font:600 14px Manrope,sans-serif;padding:9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button.big{font-size:18px;padding:12px 22px;background:var(--ink);color:#fff}
+  button.big:hover{background:var(--margin);border-color:var(--margin)}
+  button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+
+  .result{display:none;margin-top:18px;padding:14px 16px;border:2px dashed var(--margin);background:#fff}
+  .result.show{display:block}
+  .result b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .teacher{margin-top:28px;padding:14px 16px;border:2px solid var(--ink);background:#fff;display:none}
+  .teacher.show{display:block}
+  .teacher h2{font-family:Caveat,cursive;font-size:32px;margin:0 0 6px;color:var(--ink)}
+  .ok{color:var(--good);font-weight:800}.bad{color:var(--margin);font-weight:800}
+  @media (max-width:560px){.field{height:480px}.word{font-size:14px;padding:8px 4px}.target strong{font-size:32px}.page{padding-left:44px}}
+  @media (prefers-reduced-motion:reduce){.word.right,.word.wrong,.toast.show{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Падающие слова</h1>
+  <p class="sub">Внизу написано русское слово. Сверху падают английские варианты: нажмите на правильный, пока он не упал на красную линию. Каждое слово нужно поймать дважды, чтобы оно считалось выученным. На компьютере можно нажимать клавиши 1–4.</p>
+
+  <div class="hud">
+    <span class="stat" id="score">0 очков</span>
+    <span class="lives" id="lives" aria-label="Жизни"></span>
+    <span class="stat" id="learnedTxt"></span>
+    <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  </div>
+
+  <div class="field" id="field">
+    <div class="ground"></div>
+    <div class="target" id="target"><small>Найдите перевод</small><strong id="targetWord">—</strong></div>
+    <div class="toast" id="toast"></div>
+    <div class="overlay" id="overlay">
+      <h2 id="ovTitle">Готовы?</h2>
+      <p id="ovText"></p>
+      <button class="big" id="startBtn">Начать игру</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="pauseBtn">Пауза</button>
+    <button id="endBtn">Закончить и получить код</button>
+    <button id="restartBtn">Начать заново</button>
+    <label class="tog"><input type="checkbox" id="speak" checked> Озвучивать слова</label>
+  </div>
+
+  <div class="result" id="result">
+    <b id="resTitle">Игра окончена</b>
+    <div>Впишите своё имя, скопируйте результат и отправьте его учителю в ответе к заданию.</div>
+    <input id="studentName" placeholder="Имя и фамилия" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Скопировать результат</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tLearned" placeholder="Выучено" size="7">
+      <input id="tScore" placeholder="Очки" size="6">
+      <input id="tMist" placeholder="Ошибки" size="6">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+const PAIRS = [
+  ["inappropriate","несоответствующий"],["cited","цитируется"],["originate","происходить"],
+  ["rely on","полагаться на"],["mention","упоминать"],["considered outdated","считается устаревшим"],
+  ["such as men","такие, как мужчины"],["regarding","относительно"],["lack","отсутствие"],
+  ["assumptions","допущения"],["in society","в обществе"],["prejudice","предубеждение"],
+  ["abilities","способности"],["outdated","устаревший"],["behave","вести себя"],
+  ["particular groups","конкретные группы"],["appearance","внешность"],["assume","предполагать"],
+  ["appropriate","подходящий"],["retired","находятся на пенсии"]
+];
+
+const LANES=4, NEED=2, LIVES=5, TARGET_H=92;
+const INTRO_TEXT=()=>`Слов: ${PAIRS.length}, жизней: ${LIVES}. С каждым выученным словом они падают быстрее.`;
+document.getElementById("ovText").textContent=INTRO_TEXT();
+const $=id=>document.getElementById(id);
+const field=$("field");
+
+let gen=0, learned, mistakes, score, streak, lives, wave, target, running, paused, busy, lastT, ended, startTime;
+
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+// разметка дорожек
+for(let i=1;i<LANES;i++){const l=document.createElement("div");l.className="lane-line";l.style.left=(i*100/LANES)+"%";field.appendChild(l)}
+
+function speak(text){
+  if(!$("speak").checked||!("speechSynthesis" in window))return;
+  const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=.9;
+  speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+function toast(text,color){
+  const t=$("toast");t.textContent=text;t.style.color=color;
+  t.classList.remove("show");void t.offsetWidth;t.classList.add("show");
+}
+function hud(){
+  $("score").textContent=score+" очков";
+  $("lives").textContent="♥".repeat(lives)+"♡".repeat(LIVES-lives);
+  const n=learned.filter(x=>x>=NEED).length;
+  $("learnedTxt").textContent=`${n} / ${PAIRS.length}`;
+  $("bar").style.width=(n/PAIRS.length*100)+"%";
+}
+function speed(){ // пикселей в секунду
+  const n=learned.filter(x=>x>=NEED).length;
+  return Math.min(45+n*5.5+Math.min(streak,8)*2,170);
+}
+
+function pickTarget(){
+  const open=PAIRS.map((p,i)=>i).filter(i=>learned[i]<NEED);
+  // чаще даём слова с ошибками, реже повторяем только что показанное
+  const pool=[];
+  open.forEach(i=>{const w=1+(mistakes[i]||0)*2;for(let k=0;k<w;k++)pool.push(i)});
+  let t=pool[Math.floor(Math.random()*pool.length)];
+  if(t===target&&open.length>1)t=open.filter(i=>i!==target)[Math.floor(Math.random()*(open.length-1))];
+  return t;
+}
+
+function spawnWave(){
+  clearWave();
+  target=pickTarget();
+  $("targetWord").textContent=PAIRS[target][1];
+  const others=shuffle(PAIRS.map((p,i)=>i).filter(i=>i!==target)).slice(0,LANES-1);
+  const opts=shuffle([target,...others]);
+  const w=field.clientWidth/LANES;
+  wave=opts.map((idx,lane)=>{
+    const el=document.createElement("div");
+    el.className="word";el.setAttribute("role","button");
+    el.innerHTML=`<span class="key">${lane+1}</span>${PAIRS[idx][0]}`;
+    el.style.left=(lane*w+6)+"px";el.style.width=(w-12)+"px";
+    const item={el,idx,lane,y:-60-Math.random()*140,v:.85+Math.random()*.35,done:false};
+    el.addEventListener("pointerdown",e=>{e.preventDefault();choose(item)});
+    field.insertBefore(el,$("overlay"));
+    return item;
+  });
+  busy=false;
+}
+function clearWave(){(wave||[]).forEach(it=>it.el.remove());wave=[]}
+
+function choose(item){
+  if(!running||paused||busy||item.done)return;
+  if(item.idx===target){
+    busy=true;item.done=true;item.el.classList.add("right");
+    streak++;score+=10+Math.min(streak,10)*2;learned[target]++;
+    speak(PAIRS[target][0]);
+    toast(learned[target]>=NEED?"Выучено!":"Верно!","var(--good)");
+    hud();
+    if(learned.every(x=>x>=NEED)){setTimeout(()=>finish("win"),500);return}
+    setTimeout(spawnWave,450);
+  }else{
+    item.done=true;item.el.classList.add("wrong");
+    streak=0;mistakes[target]=(mistakes[target]||0)+1;
+    loseLife("Не то слово");
+  }
+}
+function loseLife(msg){
+  lives--;hud();toast(msg,"var(--margin)");
+  if(lives<=0){busy=true;revealAnswer();setTimeout(()=>finish("lose"),1100)}
+}
+function revealAnswer(){
+  const it=wave.find(w=>w.idx===target);if(it)it.el.classList.add("reveal");
+}
+function miss(){
+  busy=true;streak=0;mistakes[target]=(mistakes[target]||0)+1;
+  revealAnswer();speak(PAIRS[target][0]);
+  loseLife("Упало: "+PAIRS[target][0]);
+  if(lives>0)setTimeout(spawnWave,1300);
+}
+
+function loop(t,g){
+  if(!running||g!==gen)return;
+  const dt=Math.min((t-(lastT||t))/1000,.05);lastT=t;
+  if(!paused&&!busy){
+    const floor=field.clientHeight-TARGET_H;
+    for(const it of wave){
+      if(it.done)continue;
+      it.y+=speed()*it.v*dt;
+      it.el.style.transform=`translateY(${it.y}px)`;
+      if(it.y+it.el.offsetHeight>=floor){
+        if(it.idx===target){miss();break}
+        it.done=true;it.el.style.opacity=".25";
+      }
+    }
+  }
+  requestAnimationFrame(tt=>loop(tt,g));
+}
+
+function start(){
+  learned=PAIRS.map(()=>0);mistakes={};score=0;streak=0;lives=LIVES;
+  paused=false;busy=false;ended=false;lastT=0;startTime=Date.now();result=null;
+  $("overlay").classList.add("hidden");$("result").classList.remove("show");
+  $("pauseBtn").textContent="Пауза";$("copied").textContent="";
+  hud();spawnWave();
+  running=true;const g=++gen;requestAnimationFrame(tt=>loop(tt,g));
+}
+function setPause(p){
+  if(!running||ended)return;
+  paused=p;lastT=0;
+  $("pauseBtn").textContent=p?"Продолжить":"Пауза";
+  $("ovTitle").textContent="Пауза";$("ovText").textContent="Нажмите, чтобы продолжить.";
+  $("startBtn").textContent="Продолжить";
+  $("overlay").classList.toggle("hidden",!p);
+}
+
+// ---------- Результат и код ----------
+const SALT="falling-stereotypes-2026";
+function makeCode(name,learnedN,sc,mist){
+  const str=[SALT,name.trim().toLowerCase(),learnedN,sc,mist].join("|");
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+let result=null;
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(имя не указано)";
+  const r=result;
+  $("report").textContent=
+    `Падающие слова: Stereotypes\nИмя: ${name}\nВыучено: ${r.learnedN}/${PAIRS.length}\nОчки: ${r.score}\nОшибки: ${r.mist}\nВремя: ${r.time}`+
+    (r.weak.length?`\nПовторить: ${r.weak.join(", ")}`:"")+
+    `\nКод: ${makeCode(name,r.learnedN,r.score,r.mist)}`;
+}
+function finish(kind){
+  if(ended)return;ended=true;running=false;busy=true;
+  const learnedN=learned.filter(x=>x>=NEED).length;
+  const mist=Object.values(mistakes).reduce((a,b)=>a+b,0);
+  const weak=Object.entries(mistakes).sort((a,b)=>b[1]-a[1]).map(([i])=>PAIRS[i][0]);
+  result={learnedN,score,mist,weak,time:fmt(Math.floor((Date.now()-startTime)/1000))};
+  const title=kind==="win"?"Все слова выучены!":kind==="lose"?"Жизни закончились":"Игра завершена";
+  $("ovTitle").textContent=title;
+  $("ovText").textContent=`Выучено ${learnedN} из ${PAIRS.length}, ${score} очков. Результат ниже.`;
+  $("startBtn").textContent="Сыграть ещё раз";
+  $("overlay").classList.remove("hidden");
+  $("resTitle").textContent=title;
+  buildReport();$("result").classList.add("show");
+}
+
+$("startBtn").onclick=()=>{ if(running&&paused&&!ended)setPause(false); else start(); };
+$("pauseBtn").onclick=()=>setPause(!paused);
+$("restartBtn").onclick=()=>{running=false;clearWave();start()};
+$("endBtn").onclick=()=>{
+  if(!running||ended)return;
+  if(!confirm("Закончить игру и получить результат?"))return;
+  finish("stop");
+};
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,msg=$("copied");
+  try{await navigator.clipboard.writeText(t);msg.textContent="Скопировано"}
+  catch(e){
+    const r=document.createRange();r.selectNodeContents($("report"));
+    const s=getSelection();s.removeAllRanges();s.addRange(r);
+    msg.textContent="Текст выделен, нажмите Ctrl+C";
+  }
+};
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT")return;
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=LANES&&wave){const it=wave.find(w=>w.lane===n-1);if(it)choose(it)}
+  if(e.key===" "||e.key==="p"||e.key==="з"){e.preventDefault();setPause(!paused)}
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&running&&!paused&&!ended)setPause(true)});
+
+// Режим учителя: ссылка с #teacher в конце
+if(location.hash==="#teacher")$("teacher").classList.add("show");
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tLearned").split("/")[0].trim(),v("tScore"),v("tMist"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok">Код верный, результат не изменён.</span>':'<span class="bad">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+learned=PAIRS.map(()=>0);lives=LIVES;score=0;hud();
+</script>
+</body>
+</html>
