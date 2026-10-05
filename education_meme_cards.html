@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мем-карточки: Education</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&family=Oswald:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A; --hl:#FFE970;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:720px;margin:0 auto;padding:24px 16px 40px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:52px;line-height:1;margin:0 0 4px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 16px;max-width:62ch}
+
+  .hud{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .stat{font-family:Caveat,cursive;font-size:30px;color:var(--ink)}
+  .progress{flex:1;min-width:140px;height:10px;border:2px solid var(--ink);background:#fff;border-radius:6px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+
+  .sheet{background:#fff;border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);padding:20px 22px 22px}
+  .step{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+  .pips{display:flex;gap:4px;margin-right:6px}
+  .pips i{width:18px;height:6px;border:1.5px solid var(--ink);border-radius:2px}
+  .pips i.on{background:var(--ink)}
+
+  /* мем */
+  .meme{position:relative;aspect-ratio:16/10;border:2px solid var(--text);overflow:hidden;
+    display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;padding:12px 14px;
+    font-family:Oswald,Impact,"Arial Narrow",sans-serif;font-weight:700;text-transform:uppercase;color:#fff;line-height:1.15;
+    text-shadow:2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000,0 2px 0 #000,2px 0 0 #000,0 -2px 0 #000,-2px 0 0 #000}
+  .meme .t{font-size:clamp(15px,3.6vw,22px);position:relative;z-index:1}
+  .meme .b{font-size:clamp(18px,4.6vw,28px);position:relative;z-index:1}
+  .meme .pic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(64px,16vw,110px);text-shadow:none;letter-spacing:6px}
+  .blank{display:inline-block;min-width:3.4em;border-bottom:4px solid var(--hl);color:transparent;text-shadow:none}
+  .fill{color:#111;background:var(--hl);text-shadow:none;padding:0 6px;text-transform:none}
+  .meme.small{aspect-ratio:auto;height:auto;padding:0;border:none;display:inline-flex}
+
+  .big{font-family:Caveat,cursive;font-size:60px;line-height:1;color:var(--ink);margin:6px 0 6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .em{font-size:44px}
+  .say{border:none;background:none;font-size:24px;cursor:pointer;padding:4px}
+  .say:hover{background:none;transform:scale(1.15)}
+  .ask{font-family:Caveat,cursive;font-size:28px;color:var(--ink);margin:16px 0 8px}
+  .ru-line{font-size:17px;font-weight:600;margin:12px 0 0}
+
+  button{font:600 15px Manrope,sans-serif;padding:10px 16px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  button.main{background:var(--ink);color:#fff}
+  button.main:hover{background:var(--margin);border-color:var(--margin)}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .opt{display:flex;gap:8px;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+  .opt .k{font:700 20px/1 Caveat,cursive;color:var(--margin)}
+  .opt:hover .k{color:#fff}
+  .opt.right{background:#E3F0DE;border-color:var(--good);color:var(--good)}
+  .opt.wrong{background:#FFF0F0;border-color:var(--margin);color:var(--margin);text-decoration:line-through}
+  .opt:disabled{cursor:default}
+  .opt:disabled:hover{background:#fff;color:var(--ink)}
+  .opt.right:disabled:hover{background:#E3F0DE;color:var(--good)}
+  .opt.wrong:disabled:hover{background:#FFF0F0;color:var(--margin)}
+  @media (max-width:560px){.opts{grid-template-columns:1fr}}
+
+  .info{margin-top:16px;padding:12px 14px;border-left:4px solid var(--ink);background:#F3F6F9}
+  .info .w{font-family:Caveat,cursive;font-size:38px;color:var(--ink);line-height:1}
+  .info .tr{font-weight:800;margin:2px 0 8px}
+  .info .ex{font-size:16px;line-height:1.5}
+  .info .ex mark{background:linear-gradient(transparent 45%,var(--hl) 45% 92%,transparent 92%);font-weight:800;color:inherit}
+  .info .exru{font-size:14px;color:var(--muted);margin-top:4px}
+  .fb{margin-top:12px;font-weight:700;min-height:22px}
+  .fb.good{color:var(--good)}.fb.bad{color:var(--margin)}
+  .typerow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .typerow input{font:700 20px Manrope,sans-serif;padding:8px 10px;border:none;border-bottom:2px solid var(--ink);background:#EEF2FA;flex:1;min-width:180px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .shake{animation:shake .4s}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}}
+  .pop{animation:pop .45s}
+  @keyframes pop{0%{transform:scale(.96);opacity:.4}100%{transform:none;opacity:1}}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+  .result,.teacher{margin-top:22px;padding:14px 16px;background:#fff;display:none}
+  .result{border:2px dashed var(--margin)}.teacher{border:2px solid var(--ink)}
+  .result.show,.teacher.show{display:block}
+  .result b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .teacher h2{font-family:Caveat,cursive;font-size:32px;margin:0 0 6px;color:var(--ink)}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok{color:var(--good);font-weight:800}.bad{color:var(--margin);font-weight:800}
+  @media (max-width:560px){.page{padding-left:44px}h1{font-size:42px}.sheet{padding:16px 14px 18px}.big{font-size:48px}}
+  @media (prefers-reduced-motion:reduce){.shake,.pop{animation:none}.progress i{transition:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Мем-карточки</h1>
+  <p class="sub">Каждое слово проходит три шага: угадать его по мему, выбрать перевод и вспомнить самому. Новые слова появляются понемногу, а трудные возвращаются чаще. С клавиатуры: 1–3 выбирают ответ, Enter — дальше.</p>
+
+  <div class="hud">
+    <span class="stat" id="learnedTxt"></span>
+    <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  </div>
+
+  <main class="sheet" id="sheet" aria-live="polite"></main>
+
+  <div class="controls">
+    <button id="endBtn">Закончить и получить код</button>
+    <button id="restartBtn">Начать заново</button>
+    <label class="tog"><input type="checkbox" id="autoSpeak" checked> Озвучивать</label>
+  </div>
+
+  <div class="result" id="result">
+    <b id="resTitle">Все слова выучены!</b>
+    <div>Впишите своё имя, скопируйте результат и отправьте его учителю в ответе к заданию.</div>
+    <input id="studentName" placeholder="Имя и фамилия" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Скопировать результат</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tLearned" placeholder="Выучено" size="7">
+      <input id="tMist" placeholder="Ошибки" size="7">
+      <input id="tHints" placeholder="Подсказки" size="8">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ================== СЛОВА И МЕМЫ ==================
+// [слово, перевод, пример, перевод примера, эмодзи-картинка, верхний текст мема, нижний текст мема]
+// В нижнем тексте ____ — место, куда встаёт слово. В примере слово берётся в {фигурные скобки}.
+const CARDS = [
+  ["inspiring","вдохновляющий","Our teacher's stories are so {inspiring} that I want to become a scientist.","Рассказы нашего учителя так вдохновляют, что я хочу стать учёным.","🤩🔭","Когда учитель так рассказал про космос, что ты в 23:00 смотришь документалки","Урок был слишком ____"],
+  ["demanding","требовательный","My boss is very {demanding}: he wants everything done yesterday.","Мой начальник очень требовательный: ему всё нужно ещё вчера.","😩📚","Учитель: «Прочитайте 3 главы, выучите 50 слов и напишите эссе. К завтра»","Я: она такая ____"],
+  ["rigorous","строгий","The exam was {rigorous}: three hours and no calculator.","Экзамен был строгим: три часа и без калькулятора.","🧐📏","Когда проверяют не только ответ, но и наклон твоих букв","Самая ____ проверка в моей жизни"],
+  ["hands-on","практический","I prefer {hands-on} lessons where we do experiments.","Я больше люблю практические уроки, где мы ставим опыты.","🧪🔥","Когда на химии вместо параграфа дали всё смешивать самим","____ урок. Брови пока на месте"],
+  ["in-depth","глубокий","We did an {in-depth} study of one poem for a whole week.","Мы целую неделю подробно разбирали одно стихотворение.","🤿📖","Ты: просто скажи, что было в 1812 году","Историк: начинает ____ рассказ с 1700 года"],
+  ["steep","крутой","Learning Japanese has a {steep} learning curve.","В японском нужно очень быстро много выучить (крутая кривая обучения).","🧗📈","Первый день на работе: «Вот 40 программ, разберёшься до обеда»","Кривая обучения: очень ____"],
+  ["well-rounded","разносторонний","The school wants students to be {well-rounded}, not just good at maths.","Школа хочет, чтобы ученики были разносторонними, а не только хорошо знали математику.","🎻⚽♟️","Мама записала тебя на скрипку, футбол, шахматы и китайский","«Хочу, чтобы ты был ____»"],
+  ["high-stakes","с высокими ставками","Final exams are {high-stakes}: your whole future depends on them.","Выпускные экзамены — это высокие ставки: от них зависит всё твоё будущее.","🎰😰","Экзамен, от которого зависит, поступишь ли ты в университет","Ничего особенного, просто ____ тест"],
+  ["rote","механический","{Rote} learning means repeating things until you remember them.","Механическое заучивание — это повторять, пока не запомнишь.","🦜🔁","Выучил стих наизусть, но понятия не имеешь, о чём он","____ learning: уровень попугай"],
+  ["formative","формирующий","My teenage years were {formative}: they made me who I am.","Подростковые годы меня сформировали: благодаря им я стал собой.","🌱🌳","Тот самый летний лагерь, после которого ты стал другим человеком","Мои ____ годы"],
+  ["supportive","поддерживающий","My parents are very {supportive} of my decision to study art.","Мои родители очень поддерживают моё решение изучать искусство.","🤗📝","Получил двойку, а учитель говорит: «Ничего, разберём вместе»","Самый ____ учитель в мире"],
+  ["engaging","увлекательный","The lesson was so {engaging} that nobody looked at their phone.","Урок был настолько увлекательным, что никто не смотрел в телефон.","🎮📚","Урок такой интересный, что ты забыл проверить телефон","Слишком ____, чтобы скроллить"]
+];
+// ===================================================
+
+const BATCH=4;          // сколько новых слов учим одновременно
+const STEPS=3;          // шаги: мем → перевод → вспомнить
+const STEP_NAMES=["Новое слово · угадай по мему","Что значит это слово?","Вспомни слово сам"];
+const COLORS=["#3B4A6B","#5A3E6E","#2F5D50","#7A3B3B","#3E5A7A","#6B5A2E"];
+
+const $=id=>document.getElementById(id);
+const sheet=$("sheet");
+let lvl, order, queue, nextNew, mistakes, errWords, hints, startTime, finished, result, cur, shownLetters, locked;
+
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>s.toLowerCase().replace(/[^a-z]/g,"");
+function speak(t){if(!$("autoSpeak").checked||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function shake(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+
+function meme(i,reveal){
+  const c=CARDS[i];
+  const parts=c[6].split("____").map(esc);
+  const mid=reveal?`<span class="fill">${esc(c[0])}</span>`:`<span class="blank">____</span>`;
+  return `<div class="meme pop" style="background:${COLORS[i%COLORS.length]}">
+    <div class="pic" aria-hidden="true">${c[4]}</div>
+    <div class="t">${esc(c[5])}</div>
+    <div class="b">${parts.join(mid)}</div></div>`;
+}
+function info(i){
+  const c=CARDS[i];
+  return `<div class="info pop"><div class="w">${esc(c[0])} <button class="say" data-say="${esc(c[0])}" aria-label="Послушать">🔊</button></div>
+    <div class="tr">${esc(c[1])}</div>
+    <div class="ex">${esc(c[2]).replace(/\{(.+?)\}/,"<mark>$1</mark>")}</div>
+    <div class="exru">${esc(c[3])}</div></div>`;
+}
+function pips(l){return `<span class="pips">${Array.from({length:STEPS},(x,k)=>`<i class="${k<=l?"on":""}"></i>`).join("")}</span>`}
+function options(right,field){
+  const others=shuffle(CARDS.map((c,k)=>k).filter(k=>k!==right)).slice(0,2);
+  return shuffle([right,...others]).map((k,n)=>`<button class="opt" data-k="${k}"><span class="k">${n+1}</span>${esc(CARDS[k][field])}</button>`).join("");
+}
+function bindSay(){sheet.querySelectorAll("[data-say]").forEach(b=>b.onclick=e=>{e.stopPropagation();const v=$("autoSpeak").checked;$("autoSpeak").checked=true;speak(b.dataset.say);$("autoSpeak").checked=v})}
+function updateHud(){
+  const n=lvl.filter(x=>x>=STEPS).length;
+  $("learnedTxt").textContent=`выучено ${n} / ${CARDS.length}`;
+  $("bar").style.width=(n/CARDS.length*100)+"%";
+}
+function nextBtn(label){return `<div class="actions"><button class="main" id="next">${label||"Дальше →"}</button></div>`}
+
+// ---------- очередь ----------
+function requeue(i,gap){queue.splice(Math.min(gap,queue.length),0,i)}
+function addNew(){if(nextNew<order.length)requeue(order[nextNew++],1)}
+function show(){
+  updateHud();
+  if(!queue.length){finish(false);return}
+  cur=queue.shift();locked=false;
+  [stepGuess,stepMeaning,stepRecall][lvl[cur]](cur);
+  bindSay();
+}
+
+// шаг 1: угадать слово по мему (без штрафа — это знакомство)
+function stepGuess(i){
+  sheet.innerHTML=`<div class="step">${pips(0)}${STEP_NAMES[0]}</div>${meme(i,false)}
+    <p class="ask">Какое слово спряталось в меме?</p><div class="opts">${options(i,0)}</div><div id="after"></div>`;
+  sheet.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(locked)return;locked=true;
+    const ok=+b.dataset.k===i;
+    sheet.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.k===i)x.classList.add("right")});
+    if(!ok)b.classList.add("wrong");
+    sheet.querySelector(".meme").outerHTML=meme(i,true);
+    $("after").innerHTML=`<div class="fb ${ok?"good":"bad"}">${ok?"Угадали!":"Не угадали, но теперь вы его знаете."}</div>${info(i)}${nextBtn("Запомнил →")}`;
+    bindSay();speak(CARDS[i][0]);
+    $("next").onclick=()=>{lvl[i]=1;requeue(i,3);show()};$("next").focus();
+  });
+}
+// шаг 2: выбрать перевод
+function stepMeaning(i){
+  const c=CARDS[i];
+  sheet.innerHTML=`<div class="step">${pips(1)}${STEP_NAMES[1]}</div>
+    <div class="big"><span class="em" aria-hidden="true">${c[4]}</span>${esc(c[0])}<button class="say" data-say="${esc(c[0])}" aria-label="Послушать">🔊</button></div>
+    <p class="ask">Выберите перевод</p><div class="opts">${options(i,1)}</div><div id="after"></div>`;
+  speak(c[0]);
+  sheet.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(locked)return;locked=true;
+    const ok=+b.dataset.k===i;
+    sheet.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.k===i)x.classList.add("right")});
+    if(ok){
+      $("after").innerHTML=`<div class="fb good">Верно!</div>`;
+      lvl[i]=2;requeue(i,3);setTimeout(show,700);
+    }else{
+      b.classList.add("wrong");shake(b);miss(i);
+      $("after").innerHTML=`<div class="fb bad">Не то. Посмотрите ещё раз:</div>${info(i)}${nextBtn()}`;
+      bindSay();requeue(i,2);
+      $("next").onclick=show;$("next").focus();
+    }
+  });
+}
+// шаг 3: вписать слово по мему и переводу
+function stepRecall(i){
+  const c=CARDS[i];shownLetters=0;
+  sheet.innerHTML=`<div class="step">${pips(2)}${STEP_NAMES[2]}</div>${meme(i,false)}
+    <p class="ru-line">Перевод: ${esc(c[1])}</p>
+    <div class="typerow"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Слово на английском">
+    <button class="main" id="check">Проверить</button><button id="hint">Подсказка</button></div><div id="after"></div>`;
+  const inp=$("ans");inp.focus();
+  $("hint").onclick=()=>{
+    if(locked)return;
+    if(shownLetters<c[0].length-1){shownLetters++;hints++;}
+    inp.placeholder=c[0].slice(0,shownLetters)+"…";inp.focus();
+  };
+  const check=()=>{
+    if(locked)return;
+    if(!inp.value.trim()){shake(inp);return}
+    locked=true;inp.readOnly=true;
+    sheet.querySelector(".meme").outerHTML=meme(i,true);
+    if(norm(inp.value)===norm(c[0])){
+      lvl[i]=3;speak(c[0]);addNew();
+      $("after").innerHTML=`<div class="fb good">Есть! Слово выучено.</div>`;
+      updateHud();setTimeout(show,900);
+    }else{
+      miss(i);requeue(i,2);
+      $("after").innerHTML=`<div class="fb bad">Правильно: ${esc(c[0])}</div>${info(i)}${nextBtn()}`;
+      bindSay();speak(c[0]);$("next").onclick=show;$("next").focus();
+    }
+  };
+  $("check").onclick=check;
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();check()}});
+}
+function miss(i){mistakes++;errWords[i]=(errWords[i]||0)+1}
+
+// клавиатура: 1–3 и Enter
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.ctrlKey||e.metaKey||e.altKey)return;
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=3){const b=[...sheet.querySelectorAll(".opt")].find(x=>x.querySelector(".k").textContent===String(n));if(b&&!b.disabled)b.click();return}
+  if(e.key==="Enter"&&$("next")&&document.activeElement!==$("next")){e.preventDefault();$("next").click()}
+});
+
+// ---------- результат и код ----------
+const SALT="meme-cards-education-2026";
+function makeCode(name,l,m,h){
+  const str=[SALT,name.trim().toLowerCase(),l,m,h].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(имя не указано)",r=result;
+  $("report").textContent=`Мем-карточки: Education\nИмя: ${name}\nВыучено: ${r.l}/${CARDS.length}\nОшибки: ${r.m}\nПодсказки: ${r.h}\nВремя: ${r.time}`+
+    (r.hard.length?`\nПовторить: ${r.hard.join(", ")}`:"")+`\nКод: ${makeCode(name,r.l,r.m,r.h)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  const l=lvl.filter(x=>x>=STEPS).length;
+  const hard=Object.entries(errWords).sort((a,b)=>b[1]-a[1]).map(([i])=>CARDS[i][0]);
+  result={l,m:mistakes,h:hints,hard,time:fmt(Math.floor((Date.now()-startTime)/1000))};
+  $("resTitle").textContent=early?`Выучено ${l} из ${CARDS.length}`:"Все слова выучены!";
+  if(!early)sheet.innerHTML=`<div class="step">${pips(2)}Готово</div><div class="big">🎉 Все слова выучены!</div><p>Результат и код — ниже.</p>`;
+  buildReport();$("result").classList.add("show");
+  $("result").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"});
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Скопировано"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Текст выделен, нажмите Ctrl+C"}
+};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Закончить и получить результат?"))finish(true)};
+$("restartBtn").onclick=()=>{if(confirm("Начать заново?"))start()};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tLearned").split("/")[0].trim(),v("tMist"),v("tHints"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok">Код верный, результат не изменён.</span>':'<span class="bad">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+function start(){
+  lvl=CARDS.map(()=>0);order=shuffle(CARDS.map((c,i)=>i));
+  queue=order.slice(0,BATCH);nextNew=Math.min(BATCH,order.length);
+  mistakes=0;errWords={};hints=0;startTime=Date.now();finished=false;result=null;
+  $("result").classList.remove("show");$("copied").textContent="";
+  show();
+}
+start();
+</script>
+</body>
+</html>
