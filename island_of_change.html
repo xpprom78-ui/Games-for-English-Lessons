@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Island of Change</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A; --hl:#FFE970;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:760px;margin:0 auto;padding:24px 16px 40px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:52px;line-height:1;margin:0 0 4px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 16px;max-width:62ch}
+  .hud{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .stat{font-family:Caveat,cursive;font-size:28px;color:var(--ink)}
+  .progress{flex:1;min-width:120px;height:10px;border:2px solid var(--ink);background:#fff;border-radius:6px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+
+  /* ===== сцена ===== */
+  .scene{position:relative;aspect-ratio:16/9;border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);overflow:hidden;
+    background:linear-gradient(#BFE3F5 0 55%,#5FA8D3 55% 100%)}
+  .scene::before{content:"";position:absolute;left:0;right:0;top:55%;height:3px;background:repeating-linear-gradient(90deg,#fff8 0 18px,transparent 18px 36px)}
+  .sun{position:absolute;top:8%;right:8%;width:9%;aspect-ratio:1;border-radius:50%;background:#FFD54A;box-shadow:0 0 0 6px #FFE97066}
+  .it{position:absolute;transform:translate(-50%,-50%);line-height:1;user-select:none}
+  .it .walker{position:absolute;left:0;top:-10%;font-size:45%;opacity:0}
+  .it.wait{visibility:hidden}
+  .it.mark{outline:3px dashed var(--margin);outline-offset:6px;border-radius:6px}
+
+  /* начальные состояния */
+  .emerge.init{opacity:0;translate:0 45%}
+  .land.init{opacity:0}
+  .grow.init .g{clip-path:inset(100% 0 0 0)}
+  .morph .b{display:none}
+  .morph.final .a{display:none}.morph.final .b{display:inline}
+  .unlock.init{filter:grayscale(1);opacity:.35}
+  .vanish.final{opacity:0}
+
+  /* анимации */
+  .emerge.anim{animation:emerge 1.4s cubic-bezier(.2,.7,.3,1)}
+  @keyframes emerge{from{opacity:0;translate:0 45%}to{opacity:1;translate:0 0}}
+  .land.anim{animation:land 1.1s cubic-bezier(.3,.7,.4,1)}
+  @keyframes land{0%{opacity:0;translate:0 -260%}60%{opacity:1;translate:0 8%}80%{translate:0 -6%}100%{translate:0 0}}
+  .grow.anim .g{animation:build 1.8s steps(4,end)}
+  @keyframes build{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+  .morph.anim{animation:morph .9s}
+  @keyframes morph{0%{transform:translate(-50%,-50%) scale(1) rotate(0)}45%{transform:translate(-50%,-50%) scale(.2) rotate(180deg)}100%{transform:translate(-50%,-50%) scale(1) rotate(360deg)}}
+  .unlock.anim{animation:unlock 1s}
+  @keyframes unlock{from{filter:grayscale(1);opacity:.35}to{filter:none;opacity:1}}
+  .unlock.anim .walker{animation:walk 2.4s .6s linear}
+  @keyframes walk{0%{opacity:1;left:-10%}100%{opacity:1;left:100%}}
+  .vanish.anim{animation:vanish 1.8s forwards}
+  @keyframes vanish{0%{opacity:1;filter:blur(0);translate:0 0}100%{opacity:0;filter:blur(8px);translate:-40% 0}}
+
+  /* ===== задание ===== */
+  .sheet{background:#fff;border:2px solid var(--text);padding:18px 20px 20px;margin-top:20px}
+  .round{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .ask{font-family:Caveat,cursive;font-size:30px;color:var(--ink);margin:0 0 10px;line-height:1.1}
+  .sent{font-size:20px;line-height:1.6;margin:0 0 14px}
+  .gap{display:inline-block;min-width:110px;border-bottom:2px dashed var(--ink);background:#EEF2FA;text-align:center;padding:0 6px}
+  .gap.ok{background:var(--hl);border-bottom:2px solid var(--good);font-weight:800}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .opts.six{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:560px){.opts,.opts.six{grid-template-columns:1fr 1fr}}
+  button{font:600 15px Manrope,sans-serif;padding:10px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  button.main{background:var(--ink);color:#fff}
+  button.main:hover{background:var(--margin);border-color:var(--margin)}
+  .opt{display:flex;gap:8px;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+  .opt .k{font:700 20px/1 Caveat,cursive;color:var(--margin)}
+  .opt:hover .k{color:#fff}
+  .opt.right{background:#E3F0DE;border-color:var(--good);color:var(--good);pointer-events:none}
+  .opt.wrong{opacity:.4;text-decoration:line-through;pointer-events:none}
+  .fb{margin-top:12px;min-height:24px;font-weight:700}
+  .fb.good{color:var(--good)}.fb.bad{color:var(--margin)}
+  .word{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-left:4px solid var(--ink);background:#F3F6F9}
+  .word b{font-family:Caveat,cursive;font-size:34px;color:var(--ink);line-height:1}
+  .say{border:none;background:none;font-size:20px;padding:2px 4px}
+  .say:hover{background:none}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .shake{animation:shake .4s}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+  .result,.teacher{margin-top:22px;padding:14px 16px;background:#fff;display:none}
+  .result{border:2px dashed var(--margin)}.teacher{border:2px solid var(--ink)}
+  .result.show,.teacher.show{display:block}
+  .result b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .teacher h2{font-family:Caveat,cursive;font-size:32px;margin:0 0 6px;color:var(--ink)}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ok-t{color:var(--good);font-weight:800}.bad-t{color:var(--margin);font-weight:800}
+  @media (max-width:560px){.page{padding-left:44px}h1{font-size:42px}.sent{font-size:18px}.sheet{padding:16px 14px}}
+  @media (prefers-reduced-motion:reduce){
+    .anim,.anim .g,.anim .walker,.shake{animation-duration:.01ms !important;animation-delay:0s !important}
+    .progress i{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Island of Change</h1>
+  <p class="sub">Every word here is a change. Choose the right word, and the island changes in front of your eyes. There are three rounds: a story, “What happened?” and new situations. Keyboard: press a number to answer, Enter to go on.</p>
+
+  <div class="hud">
+    <span class="stat" id="roundTxt"></span>
+    <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+    <span class="stat" id="scoreTxt"></span>
+  </div>
+
+  <div class="scene" id="scene" role="img" aria-label="A picture of an island that changes during the game"><div class="sun"></div></div>
+  <main class="sheet" id="sheet" aria-live="polite"></main>
+
+  <div class="controls">
+    <button id="endBtn">Finish and get my code</button>
+    <button id="restartBtn">Start again</button>
+    <label class="tog"><input type="checkbox" id="autoSpeak" checked> Sound</label>
+  </div>
+
+  <div class="result" id="result">
+    <b id="resTitle">The island is ready!</b>
+    <div>Write your name, copy your result and send it to your teacher as your answer.</div>
+    <input id="studentName" placeholder="First and last name" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Copy my result</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Check a code</h2>
+    <div>Enter the data from the student's result.</div>
+    <div class="row">
+      <input id="tName" placeholder="Name">
+      <input id="tScore" placeholder="Score" size="7">
+      <input id="tMist" placeholder="Mistakes" size="7">
+      <input id="tCode" placeholder="Code" size="8">
+      <button id="tCheck">Check</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ================== СЛОВА ==================
+// word — слово, meaning — простое объяснение на английском.
+// story — предложение для истории (раунд 1), test — новое предложение (раунд 3). Нужная форма слова — в {фигурных скобках}.
+// Картинка: anim — как слово «оживает»:
+//   emerge — поднимается снизу, land — падает и приземляется, morph — превращается из emoji в to,
+//   grow — строится по частям, unlock — из серого становится цветным, и по нему идёт walker, vanish — растворяется.
+// x, y — место на картинке в процентах, size — размер в процентах от ширины картинки.
+const WORDS = [
+  { word:"emerge", meaning:"to come out from somewhere and become easy to see",
+    story:"Long ago, a small island {emerged} from the sea.",
+    test:"A little cat {emerged} from under the bed.",
+    anim:"emerge", emoji:"🏝️", x:48, y:62, size:44 },
+  { word:"settle", meaning:"to start living in a place for a long time",
+    story:"A young family {settled} on the island and built a small house.",
+    test:"After years of travelling, my uncle {settled} in Spain.",
+    anim:"land", emoji:"🏠", x:34, y:72, size:8 },
+  { word:"transform", meaning:"to change something completely",
+    story:"They {transformed} the grey rocks into a green garden.",
+    test:"The new haircut {transformed} her: she looked like a different person.",
+    anim:"morph", emoji:"🪨", to:"🌳", x:62, y:72, size:8 },
+  { word:"progress", meaning:"to move forward, to get better or closer to the end",
+    story:"Work on the school {progressed} slowly, but in the end it was ready.",
+    test:"How is your English {progressing}?",
+    anim:"grow", emoji:"🏫", x:46, y:80, size:8 },
+  { word:"enable", meaning:"to make it possible for someone to do something",
+    story:"A new bridge {enabled} people to visit the island every day.",
+    test:"Glasses {enable} me to read very small letters.",
+    anim:"unlock", emoji:"🌉", walker:"🚶", x:86, y:66, size:15 },
+  { word:"disappear", meaning:"to go away so you can't see it any more",
+    story:"One foggy night, an old pirate ship {disappeared} into the dark.",
+    test:"My keys have {disappeared} again! Where are they?",
+    anim:"vanish", emoji:"🏴‍☠️", x:13, y:80, size:10 }
+];
+// ===========================================
+
+const ROUNDS=["The story","What happened?","New situations"];
+const $=id=>document.getElementById(id);
+const scene=$("scene"),sheet=$("sheet");
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let els=[],round,queue,qi,score,mistakes,errWords,startTime,finished,result,firstTry,locked;
+
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const formOf=s=>s.match(/\{(.+?)\}/)[1];
+const plain=s=>s.replace(/[{}]/g,"");
+function speak(t){if(!$("autoSpeak").checked||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function shake(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+
+// ---------- сцена ----------
+function buildScene(){
+  scene.querySelectorAll(".it").forEach(e=>e.remove());
+  els=WORDS.map(w=>{
+    const d=document.createElement("div");
+    d.className="it "+w.anim;
+    d.style.left=w.x+"%";d.style.top=w.y+"%";
+    const fs=()=>d.style.fontSize=(scene.clientWidth*w.size/100)+"px";
+    d._fs=fs;
+    if(w.anim==="morph")d.innerHTML=`<span class="a">${w.emoji}</span><span class="b">${w.to||w.emoji}</span>`;
+    else if(w.anim==="grow")d.innerHTML=`<span class="g" style="display:inline-block">${w.emoji}</span>`;
+    else d.textContent=w.emoji;
+    if(w.anim==="unlock"&&w.walker){const k=document.createElement("span");k.className="walker";k.textContent=w.walker;d.appendChild(k)}
+    scene.appendChild(d);fs();
+    return d;
+  });
+  els.forEach(setInit);
+  // в истории предметы появляются по очереди; то, что исчезает, видно с самого начала
+  els.forEach((e,k)=>{if(WORDS[k].anim!=="vanish")e.classList.add("wait")});
+}
+window.addEventListener("resize",()=>els.forEach(e=>e._fs&&e._fs()));
+function setInit(d){d.classList.remove("final","anim");d.classList.add("init")}
+function play(d){
+  d.classList.remove("init","anim");d.classList.add("final");
+  void d.offsetWidth;d.classList.add("anim");
+}
+function mark(i,on){els.forEach((e,k)=>e.classList.toggle("mark",on&&k===i))}
+
+// ---------- ход игры ----------
+const total=()=>WORDS.length*ROUNDS.length;
+function hud(){
+  $("roundTxt").textContent=round<ROUNDS.length?`round ${round+1} of ${ROUNDS.length}`:"done";
+  $("scoreTxt").textContent=`${score} / ${total()}`;
+  const done=round*WORDS.length+(round<ROUNDS.length?qi:0);
+  $("bar").style.width=(done/total()*100)+"%";
+}
+function startRound(r){
+  round=r;qi=0;
+  queue=r===0?WORDS.map((w,i)=>i):shuffle(WORDS.map((w,i)=>i));
+  if(r===0){
+    hud();
+    sheet.innerHTML=`<div class="round">Round 1 · ${ROUNDS[0]}</div>
+      <p class="ask">There is only sea here now. Let's create an island!</p>
+      <p>Put the words into the story. Every correct word changes the picture.</p>
+      <div class="actions"><button class="main" id="next">Start</button></div>`;
+  }else{
+    hud();
+    const txt=r===1?"Watch the picture: something is going to change. Choose the word that describes the change.":"The same words in new situations. Choose the right word.";
+    sheet.innerHTML=`<div class="round">Round ${r+1} · ${ROUNDS[r]}</div><p class="ask">${ROUNDS[r]}</p><p>${txt}</p>
+      <div class="actions"><button class="main" id="next">Let's go</button></div>`;
+  }
+  $("next").onclick=task;$("next").focus();
+}
+function task(){
+  hud();
+  if(qi>=queue.length){round+1<ROUNDS.length?startRound(round+1):finish(false);return}
+  const i=queue[qi],w=WORDS[i];firstTry=true;locked=false;
+  if(round===0||round===2){
+    const s=round===0?w.story:w.test,key=round===0?"story":"test";
+    const others=shuffle(WORDS.map((x,k)=>k).filter(k=>k!==i)).slice(0,2);
+    const opts=shuffle([i,...others]).map(k=>({k,t:formOf(WORDS[k][key])}));
+    sheet.innerHTML=`<div class="round">Round ${round+1} · ${ROUNDS[round]} · ${qi+1} of ${queue.length}</div>
+      <p class="sent">${esc(s).replace(/\{.+?\}/,'<span class="gap" id="gap">&nbsp;</span>')}</p>
+      <div class="opts">${opts.map((o,n)=>`<button class="opt" data-k="${o.k}"><span class="k">${n+1}</span>${esc(o.t)}</button>`).join("")}</div>
+      <div class="fb" id="fb"></div><div id="after"></div>`;
+    if(round===0){els[i].classList.remove("wait");mark(i,true)}
+  }else{
+    setInit(els[i]);mark(i,false);
+    setTimeout(()=>play(els[i]),reduce?50:500);
+    sheet.innerHTML=`<div class="round">Round 2 · ${ROUNDS[1]} · ${qi+1} of ${queue.length}</div>
+      <p class="ask">What happened in the picture?</p>
+      <div class="opts six">${shuffle(WORDS.map((x,k)=>k)).map((k,n)=>`<button class="opt" data-k="${k}"><span class="k">${n+1}</span>${esc(WORDS[k].word)}</button>`).join("")}</div>
+      <div class="actions"><button id="replay">▶ Watch again</button></div>
+      <div class="fb" id="fb"></div><div id="after"></div>`;
+    $("replay").onclick=()=>{setInit(els[i]);setTimeout(()=>play(els[i]),reduce?50:300)};
+  }
+  sheet.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b,i));
+}
+function answer(b,i){
+  if(locked)return;
+  const w=WORDS[i],ok=+b.dataset.k===i;
+  if(!ok){
+    b.classList.add("wrong");shake(b);
+    if(firstTry){mistakes++;errWords[w.word]=(errWords[w.word]||0)+1}
+    firstTry=false;
+    $("fb").className="fb bad";$("fb").textContent="Not quite. Try again.";
+    return;
+  }
+  locked=true;b.classList.add("right");
+  sheet.querySelectorAll(".opt:not(.right)").forEach(x=>x.disabled=true);
+  if(firstTry)score++;
+  $("fb").className="fb good";$("fb").textContent=firstTry?"Correct!":"Correct, on the second try.";
+  if(round!==1){
+    $("gap").textContent=b.textContent.replace(/^\d/,"");$("gap").classList.add("ok");
+    speak(plain(round===0?w.story:w.test));
+  }else speak(w.word);
+  if(round===0){play(els[i]);setTimeout(()=>mark(i,false),1800)}
+  $("after").innerHTML=`<div class="word"><b>${esc(w.word)}</b><button class="say" aria-label="Listen">🔊</button><span>${esc(w.meaning)}</span></div>
+    <div class="actions"><button class="main" id="next">Next →</button></div>`;
+  sheet.querySelector(".say").onclick=()=>{const v=$("autoSpeak").checked;$("autoSpeak").checked=true;speak(w.word);$("autoSpeak").checked=v};
+  hud();
+  $("next").onclick=()=>{qi++;task()};$("next").focus();
+}
+
+// клавиатура: цифры и Enter
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.ctrlKey||e.metaKey||e.altKey)return;
+  const n=parseInt(e.key,10);
+  if(n>=1){const b=[...sheet.querySelectorAll(".opt")].find(x=>x.querySelector(".k").textContent===String(n));if(b&&!b.disabled)b.click();return}
+  if(e.key==="Enter"&&$("next")&&document.activeElement!==$("next")){e.preventDefault();$("next").click()}
+});
+
+// ---------- результат и код ----------
+const SALT="island-of-change-2026";
+function makeCode(name,s,m){
+  const str=[SALT,name.trim().toLowerCase(),s,m].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(no name)",r=result;
+  $("report").textContent=`Island of Change\nName: ${name}\nScore: ${r.s}/${total()}\nMistakes: ${r.m}\nCompleted: ${r.status}\nTime: ${r.time}`+
+    (r.hard.length?`\nWords to review: ${r.hard.join(", ")}`:"")+`\nCode: ${makeCode(name,r.s,r.m)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  if(!early){round=ROUNDS.length;els.forEach(e=>{e.classList.remove("wait");play(e)});
+    sheet.innerHTML=`<div class="round">Done</div><p class="ask">The island is ready! 🎉</p><p>Your result and code are below.</p>`;}
+  hud();
+  const hard=Object.entries(errWords).sort((a,b)=>b[1]-a[1]).map(([w])=>w);
+  result={s:score,m:mistakes,hard,time:fmt(Math.floor((Date.now()-startTime)/1000)),
+    status:early?`round ${Math.min(round+1,ROUNDS.length)} of ${ROUNDS.length}`:"the whole game"};
+  $("resTitle").textContent=early?"You finished early":"The island is ready!";
+  buildReport();$("result").classList.add("show");
+  $("result").scrollIntoView({behavior:reduce?"auto":"smooth",block:"nearest"});
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Copied"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Text selected, press Ctrl+C"}
+};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Finish and get your result?"))finish(true)};
+$("restartBtn").onclick=()=>{if(confirm("Start again?"))start()};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tScore").split("/")[0].trim(),v("tMist"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">The code is correct. The result has not been changed.</span>':'<span class="bad-t">The code does not match. Check that the data is typed exactly as in the result.</span>';
+};
+
+function start(){
+  score=0;mistakes=0;errWords={};startTime=Date.now();finished=false;result=null;
+  $("result").classList.remove("show");$("copied").textContent="";
+  buildScene();startRound(0);
+}
+start();
+</script>
+</body>
+</html>

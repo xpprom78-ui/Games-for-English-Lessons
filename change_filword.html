@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Филворд: Change</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:1180px;margin:0 auto;padding:28px 20px 48px 56px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:36px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:56px;line-height:1;margin:0 0 6px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 22px;max-width:62ch}
+  .layout{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:start;position:relative;z-index:1}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}.page{padding-left:48px}}
+
+  .board-wrap{background:#fff;border:2px solid var(--ink);padding:10px;box-shadow:6px 6px 0 var(--ink);width:max-content;max-width:100%}
+  .board{display:grid;gap:3px;touch-action:none;user-select:none}
+  .cell{
+    width:var(--cs);height:var(--cs);display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:calc(var(--cs)*.5);color:var(--text);
+    background:#F3F6F9;border-radius:3px;cursor:pointer;transition:background .12s,transform .12s;
+  }
+  .cell.sel{background:var(--ink);color:#fff;transform:scale(1.06)}
+  .cell.found{color:#1b1b1b}
+  .cell.flash{animation:flash .5s}
+  .cell.hint{outline:3px dashed var(--margin);outline-offset:-3px}
+  .cell:focus{outline:3px solid var(--margin);outline-offset:1px;position:relative;z-index:1}
+  @keyframes flash{50%{background:var(--margin);color:#fff}}
+
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .stat{font-family:Caveat,cursive;font-size:30px;color:var(--ink);margin-right:10px}
+  button{font:600 14px Manrope,sans-serif;padding:9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+
+  .current{min-height:34px;font-family:Caveat,cursive;font-size:30px;color:var(--ink);letter-spacing:2px;margin-bottom:8px}
+  .words{list-style:none;margin:0;padding:0;columns:2;column-gap:24px}
+  @media (max-width:520px){.words{columns:1}}
+  .words li{break-inside:avoid;padding:7px 0 7px 10px;border-left:4px solid transparent;margin-bottom:2px}
+  .words .ru{font-weight:600}
+  .words .en{display:block;font-size:13px;color:var(--muted);min-height:1em}
+  .words li.done .ru{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+  .words li.done .en{color:var(--text);font-weight:600}
+
+  .result{display:none;margin-top:22px;padding:14px 16px;border:2px dashed var(--margin);background:#fff;position:relative;z-index:1;max-width:640px}
+  .result.show{display:block}
+  .result b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .teacher{margin-top:28px;padding:14px 16px;border:2px solid var(--ink);background:#fff;display:none;position:relative;z-index:1;max-width:640px}
+  .teacher.show{display:block}
+  .teacher h2{font-family:Caveat,cursive;font-size:32px;margin:0 0 6px;color:var(--ink)}
+  .ok{color:var(--good);font-weight:800}.bad{color:var(--margin);font-weight:800}
+  @media (prefers-reduced-motion:reduce){.cell{transition:none}.cell.flash{animation:none}}
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A; --hl:#FFE970;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Филворд</h1>
+  <p class="sub">Найдите английское слово по русскому переводу. Проводите по буквам мышкой или пальцем: слово может поворачивать под прямым углом, но идёт только по соседним клеткам. Пробелы, апострофы и дефисы в словах убраны. С клавиатуры: стрелки двигают рамку, пробел добавляет букву, Enter проверяет слово, Esc сбрасывает выделение.</p>
+
+  <div class="layout">
+    <div>
+      <div class="board-wrap"><div class="board" id="board" role="grid" aria-label="Поле с буквами"></div></div>
+    </div>
+    <div>
+      <div class="bar">
+        <span class="stat" id="score"></span>
+        <span class="stat" id="timer">00:00</span>
+      </div>
+      <div class="bar">
+        <button id="newBtn">Новая игра</button>
+        <button id="hintBtn">Подсказка</button>
+        <button id="endBtn">Закончить и получить код</button>
+      </div>
+      <div class="bar">
+        <label class="tog"><input type="checkbox" id="showEn"> Показывать английские слова</label>
+        <label class="tog"><input type="checkbox" id="autoSpeak" checked> Озвучивать</label>
+      </div>
+      <div class="current" id="current" aria-live="polite"></div>
+      <ul class="words" id="words"></ul>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <b id="resTitle">Все слова найдены!</b>
+    <div>Впишите своё имя, скопируйте результат и отправьте его учителю в ответе к заданию.</div>
+    <input id="studentName" placeholder="Имя и фамилия" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Скопировать результат</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tFound" placeholder="Найдено" size="7">
+      <input id="tHints" placeholder="Подсказки" size="8">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// Слова для поиска: [английское слово, перевод]. Длинные фразы лучше сокращать до ключевого слова.
+const PAIRS = [
+  ["progress","продвигаться, развиваться"],
+  ["enable","давать возможность"],
+  ["settle","поселиться, обосноваться"],
+  ["transform","превращать"],
+  ["emerge","появляться"],
+  ["disappear","исчезать"]
+];
+const COLORS = ["#F9CAD5","#C9E3A6","#FFD9A8","#B9D3F0","#F6B3A0","#E3D0F2","#BFE6DA","#FBE29A","#F2B8C6","#D6E7B3"];
+const ALPHA = "ABCDEFGHIJKLMNOPRSTUVWY";
+const norm = s => s.replace(/[^a-z]/gi,"").toUpperCase();
+// Размер поля подбирается сам по количеству букв
+const SIZE = Math.max(10, Math.ceil(Math.sqrt(PAIRS.reduce((n,p)=>n+norm(p[0]).length,0)/0.74)));
+
+const $=id=>document.getElementById(id);
+let grid, placements, words, found, selecting=false, sel=[], startTime, timerId, hintsUsed, hinted, wrongTries, result, finished, focusPos=[0,0];
+const boardEl=$("board");
+
+const shuffle = a => {for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const DIRS=[[0,1],[1,0],[0,-1],[-1,0]];
+
+function speak(t){
+  if(!$("autoSpeak").checked||!("speechSynthesis" in window))return;
+  const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+
+function placeWord(word, g){
+  const free=[];
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!g[r][c])free.push([r,c]);
+  shuffle(free);
+  let budget=4000;
+  for(const start of free.slice(0,60)){
+    const path=[start], used=new Set([start[0]+","+start[1]]);
+    const dfs=()=>{
+      if(--budget<0) return false;
+      if(path.length===word.length) return true;
+      const [r,c]=path[path.length-1];
+      const dirs=shuffle(DIRS.slice());
+      if(path.length>1 && Math.random()<.45){
+        const [pr,pc]=path[path.length-2]; const d=[r-pr,c-pc];
+        dirs.sort((a,b)=>(b[0]===d[0]&&b[1]===d[1])-(a[0]===d[0]&&a[1]===d[1]));
+      }
+      for(const [dr,dc] of dirs){
+        const nr=r+dr,nc=c+dc,k=nr+","+nc;
+        if(nr<0||nc<0||nr>=SIZE||nc>=SIZE||g[nr][nc]||used.has(k))continue;
+        path.push([nr,nc]);used.add(k);
+        if(dfs())return true;
+        path.pop();used.delete(k);
+      }
+      return false;
+    };
+    if(dfs()) return path;
+    if(budget<0) return null;
+  }
+  return null;
+}
+
+function generate(){
+  words=PAIRS.map(([en,ru],i)=>({en,ru,key:norm(en),color:COLORS[i%COLORS.length]}));
+  const order=words.map((w,i)=>i).sort((a,b)=>words[b].key.length-words[a].key.length);
+  for(let attempt=0;attempt<300;attempt++){
+    const g=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+    const pl={}; let ok=true;
+    for(const i of order){
+      const p=placeWord(words[i].key,g);
+      if(!p){ok=false;break}
+      p.forEach(([r,c],j)=>g[r][c]=words[i].key[j]);
+      pl[i]=p;
+    }
+    if(ok){
+      for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)
+        if(!g[r][c])g[r][c]=ALPHA[Math.floor(Math.random()*ALPHA.length)];
+      grid=g;placements=pl;return true;
+    }
+  }
+  alert("Не удалось построить поле, нажмите «Новая игра» ещё раз.");return false;
+}
+
+function cellSize(){
+  const avail=Math.min(window.innerWidth-90, 620);
+  return Math.max(18,Math.floor((avail-20-3*(SIZE-1))/SIZE));
+}
+
+function render(){
+  boardEl.style.setProperty("--cs",cellSize()+"px");
+  boardEl.style.gridTemplateColumns=`repeat(${SIZE},var(--cs))`;
+  boardEl.innerHTML="";
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+    const d=document.createElement("div");
+    d.className="cell";d.textContent=grid[r][c];d.dataset.r=r;d.dataset.c=c;
+    d.tabIndex=(r===0&&c===0)?0:-1;d.setAttribute("role","gridcell");
+    boardEl.appendChild(d);
+  }
+  focusPos=[0,0];
+  const ul=$("words");ul.innerHTML="";
+  words.forEach((w,i)=>{
+    const li=document.createElement("li");li.id="w"+i;
+    li.innerHTML=`<span class="ru"></span><span class="en"></span>`;
+    li.querySelector(".ru").textContent=w.ru;
+    ul.appendChild(li);
+  });
+  updateEn();updateScore();
+}
+
+const cellAt=(r,c)=>boardEl.children[r*SIZE+c];
+const isFound=(r,c)=>cellAt(r,c).classList.contains("found");
+
+function updateEn(){
+  const show=$("showEn").checked;
+  words.forEach((w,i)=>{$("w"+i).querySelector(".en").textContent=(show||found.has(i))?w.en:""});
+}
+function updateScore(){$("score").textContent=`${found.size} / ${words.length}`}
+
+function paintSel(){
+  boardEl.querySelectorAll(".sel").forEach(e=>e.classList.remove("sel"));
+  sel.forEach(([r,c])=>cellAt(r,c).classList.add("sel"));
+  $("current").textContent=sel.map(([r,c])=>grid[r][c]).join("");
+}
+function cellFromPoint(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(!el||!el.classList.contains("cell"))return null;
+  return [+el.dataset.r,+el.dataset.c];
+}
+function extend(pos){
+  if(!pos||finished)return;
+  const [r,c]=pos;
+  if(isFound(r,c))return;
+  const last=sel[sel.length-1];
+  if(last&&last[0]===r&&last[1]===c)return;
+  const prev=sel[sel.length-2];
+  if(prev&&prev[0]===r&&prev[1]===c){sel.pop();paintSel();return}
+  if(sel.some(([a,b])=>a===r&&b===c))return;
+  if(last&&Math.abs(last[0]-r)+Math.abs(last[1]-c)!==1)return;
+  sel.push([r,c]);paintSel();
+}
+
+function check(){
+  selecting=false;
+  const str=sel.map(([r,c])=>grid[r][c]).join("");
+  const same=(p,q)=>p.length===q.length&&p.every(([r,c],k)=>r===q[k][0]&&c===q[k][1]);
+  const onPath=i=>same(sel,placements[i])||same(sel,placements[i].slice().reverse());
+  const foreign=(i)=>sel.some(([r,c])=>words.some((w,j)=>j!==i&&!found.has(j)&&placements[j].some(([a,b])=>a===r&&b===c)));
+  let idx=words.findIndex((w,i)=>!found.has(i)&&w.key===str&&onPath(i));
+  if(idx<0)idx=words.findIndex((w,i)=>!found.has(i)&&w.key===str&&!foreign(i));
+  if(idx>=0){
+    found.add(idx);
+    sel.forEach(([r,c])=>{const e=cellAt(r,c);e.classList.add("found");e.classList.remove("hint");e.style.background=words[idx].color});
+    const li=$("w"+idx);li.classList.add("done");li.style.borderLeftColor=words[idx].color;
+    speak(words[idx].en);
+    updateEn();updateScore();
+    if(found.size===words.length)finish(false);
+  }else if(sel.length>1){
+    wrongTries++;
+    sel.forEach(([r,c])=>{const e=cellAt(r,c);e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")});
+  }
+  sel=[];paintSel();
+}
+
+boardEl.addEventListener("pointerdown",e=>{
+  const p=cellFromPoint(e.clientX,e.clientY);if(!p)return;
+  e.preventDefault();selecting=true;sel=[];extend(p);
+});
+window.addEventListener("pointermove",e=>{if(selecting)extend(cellFromPoint(e.clientX,e.clientY))});
+window.addEventListener("pointerup",()=>{if(selecting)check()});
+window.addEventListener("pointercancel",()=>{if(selecting)check()});
+
+// Управление с клавиатуры
+function moveFocus(r,c){
+  r=Math.max(0,Math.min(SIZE-1,r));c=Math.max(0,Math.min(SIZE-1,c));
+  cellAt(...focusPos).tabIndex=-1;focusPos=[r,c];
+  const el=cellAt(r,c);el.tabIndex=0;el.focus();
+}
+boardEl.addEventListener("keydown",e=>{
+  const [r,c]=focusPos;
+  const moves={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+  if(moves[e.key]){e.preventDefault();moveFocus(r+moves[e.key][0],c+moves[e.key][1]);return}
+  if(e.key===" "){e.preventDefault();extend(focusPos)}
+  else if(e.key==="Enter"){e.preventDefault();check()}
+  else if(e.key==="Escape"){sel=[];paintSel()}
+});
+boardEl.addEventListener("focusin",e=>{if(e.target.classList.contains("cell"))focusPos=[+e.target.dataset.r,+e.target.dataset.c]});
+
+$("hintBtn").onclick=()=>{
+  if(finished)return;
+  const left=words.map((w,i)=>i).filter(i=>!found.has(i));
+  if(!left.length)return;
+  const i=left.find(i=>!cellAt(...placements[i][0]).classList.contains("hint"))??left[0];
+  placements[i].slice(0,2).forEach(([r,c])=>cellAt(r,c).classList.add("hint"));
+  hintsUsed++;hinted.add(i);
+};
+$("showEn").onchange=updateEn;
+$("newBtn").onclick=()=>{if(!finished&&found.size&&!confirm("Начать новую игру? Найденные слова пропадут."))return;newGame()};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Закончить и получить результат?"))finish(true)};
+
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function tick(){$("timer").textContent=fmt(Math.floor((Date.now()-startTime)/1000))}
+
+// ---------- Результат и код ----------
+const SALT="filword-change-2026";
+function makeCode(name,f,h){
+  const str=[SALT,name.trim().toLowerCase(),f,h].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(имя не указано)",r=result;
+  $("report").textContent=`Филворд: Change\nИмя: ${name}\nНайдено: ${r.f}/${words.length}\nПодсказки: ${r.h}\nНеверных попыток: ${r.w}\nВремя: ${r.time}`+
+    (r.hard.length?`\nСложные слова: ${r.hard.join(", ")}`:"")+`\nКод: ${makeCode(name,r.f,r.h)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;clearInterval(timerId);
+  // сложные: с подсказкой или не найденные
+  const hard=words.map((w,i)=>i).filter(i=>hinted.has(i)||!found.has(i)).map(i=>words[i].en);
+  result={f:found.size,h:hintsUsed,w:wrongTries,hard,time:fmt(Math.floor((Date.now()-startTime)/1000))};
+  $("resTitle").textContent=early?`Найдено ${found.size} из ${words.length}`:"Все слова найдены!";
+  buildReport();$("result").classList.add("show");
+  $("result").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Скопировано"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Текст выделен, нажмите Ctrl+C"}
+};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tFound").split("/")[0].trim(),v("tHints"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok">Код верный, результат не изменён.</span>':'<span class="bad">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+function newGame(){
+  found=new Set();sel=[];hintsUsed=0;hinted=new Set();wrongTries=0;result=null;finished=false;
+  $("result").classList.remove("show");$("copied").textContent="";
+  if(!generate())return;render();
+  clearInterval(timerId);startTime=Date.now();tick();timerId=setInterval(tick,1000);
+}
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>boardEl.style.setProperty("--cs",cellSize()+"px"),150)});
+newGame();
+</script>
+</body>
+</html>
