@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passive Voice: мини-урок</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A; --hl:#FFE970;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:780px;margin:0 auto;padding:24px 16px 48px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  h1{font-family:Caveat,cursive;font-size:56px;line-height:1;margin:0 0 4px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 14px;max-width:62ch}
+  .hud{position:sticky;top:0;z-index:5;display:flex;gap:14px;align-items:center;padding:8px 0;background:var(--paper)}
+  .stat{font-family:Caveat,cursive;font-size:28px;color:var(--ink);white-space:nowrap}
+  .progress{flex:1;height:10px;border:2px solid var(--ink);background:#fff;border-radius:6px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+
+  section{background:#fff;border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);padding:20px 22px 22px;margin:22px 0 28px}
+  h2{font-family:Caveat,cursive;font-size:38px;line-height:1;margin:0 0 6px;color:var(--ink)}
+  h2 .n{color:var(--margin);margin-right:6px}
+  .task{color:var(--muted);margin:0 0 14px}
+  p{line-height:1.6}
+  mark{background:linear-gradient(transparent 45%,var(--hl) 45% 92%,transparent 92%);color:inherit;font-weight:800}
+  .formula{font-family:Caveat,cursive;font-size:32px;color:var(--ink);text-align:center;margin:10px 0;padding:8px;border:2px dashed var(--ink)}
+  .formula b{color:var(--margin)}
+  .pair{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:17px}
+  .pair .l{font-weight:800;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.05em;padding-top:3px}
+
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+  th,td{border:2px solid var(--ink);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#EEF2FA;color:var(--ink)}
+  td b{color:var(--margin)}
+  td small{color:var(--muted)}
+  @media (max-width:600px){
+    table,thead,tbody,tr,th,td{display:block}thead{display:none}
+    tr{border:2px solid var(--ink);margin-bottom:10px}td{border:none;border-bottom:1px solid var(--grid)}
+    td::before{content:attr(data-l);display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase}
+  }
+  .note{background:#FFFBE0;border-left:4px solid var(--hl);padding:10px 12px;margin:12px 0;font-size:15px}
+
+  /* демонстрация */
+  .demo{border:2px solid var(--grid);padding:14px;margin-top:10px}
+  .demo .act{font-size:20px;margin:0 0 10px}
+  .demo .steps{list-style:none;margin:0;padding:0}
+  .demo .steps li{padding:6px 0 6px 30px;position:relative;font-size:16px;line-height:1.5}
+  .demo .steps li::before{content:attr(data-n);position:absolute;left:0;top:4px;font:700 22px/1 Caveat,cursive;color:var(--margin)}
+  .demo .pas{font-size:21px;font-weight:800;color:var(--good);margin:10px 0 0}
+  .appear{animation:appear .35s}
+  @keyframes appear{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
+
+  button{font:600 15px Manrope,sans-serif;padding:9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+  button.main{background:var(--ink);color:#fff}
+  button.main:hover{background:var(--margin);border-color:var(--margin)}
+  button.right,button.right:hover{background:#E3F0DE;border-color:var(--good);color:var(--good)}
+  button.wrong,button.wrong:hover{background:#FFF0F0;border-color:var(--margin);color:var(--margin);text-decoration:line-through}
+  button:disabled{cursor:default}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* упражнения */
+  .item{padding:12px 0;border-bottom:1px solid var(--grid)}
+  .item:last-child{border-bottom:none}
+  .item .s{font-size:18px;line-height:1.6;margin-bottom:8px}
+  .item .s .num{font:700 22px Caveat,cursive;color:var(--margin);margin-right:6px}
+  .item.done .s{color:var(--text)}
+  .gap{display:inline-block;min-width:70px;border-bottom:2px dashed var(--ink);background:#EEF2FA;text-align:center;padding:0 6px}
+  .gap.ok{background:var(--hl);border-bottom:2px solid var(--good);font-weight:800}
+  .v3{font:700 18px Manrope,sans-serif;width:130px;padding:2px 6px;border:none;border-bottom:2px solid var(--ink);background:#EEF2FA;color:var(--ink)}
+  .v3.ok{background:#E3F0DE;border-bottom-color:var(--good);color:var(--good)}
+  .v3.bad{background:#FFF0F0;border-bottom-color:var(--margin)}
+  .hint{font-size:14px;color:var(--margin);margin-top:6px;min-height:0}
+  .fbok{font-size:14px;color:var(--good);font-weight:700;margin-top:6px}
+  .line{min-height:46px;display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:2px dashed var(--grid);margin-bottom:8px}
+  .line.ok{border-color:var(--good);background:#F2F8EF}
+  .tiles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .tile{font-weight:800;padding:7px 11px}
+  .tile.used{visibility:hidden}
+  .opts{display:grid;gap:8px}
+  .opts button{text-align:left;font-weight:600}
+  .shake{animation:shake .4s}
+  @keyframes shake{20%,60%{translate:-6px 0}40%,80%{translate:6px 0}}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+  .result,.teacher{margin-top:22px;padding:14px 16px;background:#fff;display:none}
+  .result{border:2px dashed var(--margin)}.teacher{border:2px solid var(--ink)}
+  .result.show,.teacher.show{display:block}
+  .result b.t{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .teacher h2{font-size:32px}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .ok-t{color:var(--good);font-weight:800}.bad-t{color:var(--margin);font-weight:800}
+  @media (max-width:560px){.page{padding-left:44px}h1{font-size:44px}section{padding:16px 14px 18px}.item .s{font-size:17px}}
+  @media (prefers-reduced-motion:reduce){.appear,.shake{animation:none}.progress i{transition:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Passive Voice</h1>
+  <p class="sub">Мини-урок: сначала короткое объяснение, потом пять упражнений. В конце впишите имя и отправьте результат учителю.</p>
+
+  <div class="hud"><span class="stat" id="doneTxt"></span><div class="progress" aria-hidden="true"><i id="bar"></i></div><span class="stat" id="scoreTxt"></span></div>
+
+  <!-- ===== ОБЪЯСНЕНИЕ ===== -->
+  <section>
+    <h2>Что такое пассив?</h2>
+    <p>Пассив (страдательный залог) нужен, когда важно не <b>кто</b> делает, а <b>что происходит</b> с предметом.</p>
+    <div class="pair">
+      <span class="l">Active</span><span>Mum <mark>makes</mark> the cake. <small style="color:var(--muted)">— мама делает торт</small></span>
+      <span class="l">Passive</span><span>The cake <mark>is made</mark> by Mum. <small style="color:var(--muted)">— торт сделан мамой</small></span>
+    </div>
+    <div class="formula">предмет + <b>be</b> + <b>V3</b> (3-я форма глагола)</div>
+    <table>
+      <thead><tr><th>Время</th><th>Форма</th><th>Пример</th><th>Подсказки</th></tr></thead>
+      <tbody>
+        <tr><td data-l="Время">Present Simple</td><td data-l="Форма"><b>am / is / are</b> + V3</td><td data-l="Пример">Cars <b>are made</b> in Japan.</td><td data-l="Подсказки"><small>every day, usually, often, факты</small></td></tr>
+        <tr><td data-l="Время">Past Simple</td><td data-l="Форма"><b>was / were</b> + V3</td><td data-l="Пример">The house <b>was built</b> in 1990.</td><td data-l="Подсказки"><small>yesterday, last year, ago, in 1990</small></td></tr>
+        <tr><td data-l="Время">Future Simple</td><td data-l="Форма"><b>will be</b> + V3</td><td data-l="Пример">The letter <b>will be sent</b> tomorrow.</td><td data-l="Подсказки"><small>tomorrow, next week, soon</small></td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>V3</b>: у правильных глаголов это <i>-ed</i> (clean → cleaned), у неправильных — третья колонка таблицы (write → written, make → made, build → built).<br>
+    <b>by</b> + кто сделал — добавляем, только если это важно: <i>Hamlet was written <b>by Shakespeare</b>.</i></div>
+
+    <h2 style="margin-top:18px;font-size:32px">Как это работает</h2>
+    <div class="demo" id="demo"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="main" id="demoNext">Следующий шаг</button>
+      <button id="demoOther">Другой пример</button>
+    </div>
+  </section>
+
+  <!-- упражнения строятся из данных ниже -->
+  <div id="exercises"></div>
+
+  <div class="controls">
+    <button id="endBtn">Закончить и получить код</button>
+    <button id="restartBtn">Начать заново</button>
+    <label class="tog"><input type="checkbox" id="autoSpeak" checked> Озвучивать</label>
+  </div>
+
+  <div class="result" id="result">
+    <b class="t" id="resTitle">Урок пройден!</b>
+    <div>Впишите своё имя, скопируйте результат и отправьте его учителю в ответе к заданию.</div>
+    <input id="studentName" placeholder="Имя и фамилия" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Скопировать результат</button><span id="copied"></span></div>
+  </div>
+
+  <div class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tScore" placeholder="Баллы" size="7">
+      <input id="tMist" placeholder="Ошибки" size="7">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ================== СОДЕРЖАНИЕ УРОКА ==================
+// Примеры для «Как это работает»
+const DEMOS = [
+  {active:"Shakespeare wrote Hamlet.", obj:"Hamlet", time:"Past Simple", be:"was", verb:"write", v3:"written", agent:"by Shakespeare — это важно, оставляем", passive:"Hamlet was written by Shakespeare."},
+  {active:"Mum makes pancakes every Sunday.", obj:"pancakes", time:"Present Simple, pancakes — много", be:"are", verb:"make", v3:"made", agent:"by Mum", passive:"Pancakes are made by Mum every Sunday."},
+  {active:"They will open the new shop next week.", obj:"the new shop", time:"Future Simple", be:"will be", verb:"open", v3:"opened", agent:"they — неважно кто, убираем", passive:"The new shop will be opened next week."}
+];
+// 1. Active или Passive?
+const TYPE = [
+  ["English is spoken all over the world.","passive"],
+  ["My brother plays the guitar.","active"],
+  ["The bridge was built in 1932.","passive"],
+  ["We will visit London next summer.","active"],
+  ["The results will be announced tomorrow.","passive"],
+  ["Tom cooked dinner yesterday.","active"]
+];
+// 2. Выберите форму be: [предложение с ___, ответ, подсказка после ошибки]
+const BE_FORMS = ["is","are","was","were","will be"];
+const BE = [
+  ["The windows ___ cleaned every Friday.","are","every Friday → Present Simple, windows — много"],
+  ["This song ___ written in 1985.","was","in 1985 → Past Simple, song — одна"],
+  ["The new park ___ opened next month.","will be","next month → Future Simple"],
+  ["Coffee ___ grown in Brazil.","is","это факт → Present Simple"],
+  ["These photos ___ taken last summer.","were","last summer → Past Simple, photos — много"],
+  ["The winner ___ chosen tomorrow.","will be","tomorrow → Future Simple"],
+  ["The museum ___ visited by thousands of people every year.","is","every year → Present Simple, museum — один"],
+  ["The letters ___ sent two days ago.","were","ago → Past Simple, letters — много"]
+];
+// 3. Впишите третью форму: [предложение, ответ в {скобках}, глагол-подсказка]
+const V3 = [
+  ["The pyramids were {built} thousands of years ago.","build"],
+  ["This cake is {made} with chocolate.","make"],
+  ["The book will be {translated} into Russian.","translate"],
+  ["My phone was {stolen} on the bus.","steal"],
+  ["The room is {cleaned} every morning.","clean"],
+  ["The tickets will be {sold} online.","sell"]
+];
+// 4. Соберите предложение: части через |
+const ORDER = [
+  "The Mona Lisa|was|painted|by|Leonardo da Vinci.",
+  "Tea|is|grown|in|China.",
+  "The windows|were|broken|by|the storm.",
+  "Dinner|will|be|served|at 7 o'clock.",
+  "These cars|are|made|in|Germany."
+];
+// 5. Active → Passive: выберите правильный вариант
+const CHANGE = [
+  {active:"People speak English in many countries.", ok:"English is spoken in many countries.", no:["English was spoken in many countries.","English is speak in many countries."]},
+  {active:"Someone stole my bike yesterday.", ok:"My bike was stolen yesterday.", no:["My bike is stolen yesterday.","My bike was stole yesterday."]},
+  {active:"They will build a new school next year.", ok:"A new school will be built next year.", no:["A new school will built next year.","A new school is built next year."]},
+  {active:"The teacher checks our tests every week.", ok:"Our tests are checked by the teacher every week.", no:["Our tests is checked by the teacher every week.","Our tests were checked by the teacher every week."]},
+  {active:"Agatha Christie wrote this book.", ok:"This book was written by Agatha Christie.", no:["This book was wrote by Agatha Christie.","This book is written by Agatha Christie."]}
+];
+// =======================================================
+
+const $=id=>document.getElementById(id);
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function speak(t){if(!$("autoSpeak").checked||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function shake(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+
+// ---------- демонстрация ----------
+let demoI=0,demoStep=0;
+function renderDemo(){
+  const d=DEMOS[demoI];
+  const steps=[
+    `<b>Что?</b> Находим предмет, с которым что-то делают: <mark>${esc(d.obj)}</mark>. Он встаёт в начало.`,
+    `<b>Когда?</b> ${esc(d.time)} → нужно <mark>${esc(d.be)}</mark>.`,
+    `<b>Глагол</b> → 3-я форма: ${esc(d.verb)} → <mark>${esc(d.v3)}</mark>.`,
+    `<b>Кто сделал?</b> ${esc(d.agent)}.`
+  ];
+  const act=esc(d.active).replace(esc(d.obj),`<mark>${esc(d.obj)}</mark>`);
+  $("demo").innerHTML=`<p class="act">Active: ${demoStep>0?act:esc(d.active)}</p>
+    <ul class="steps">${steps.slice(0,demoStep).map((s,k)=>`<li data-n="${k+1}" class="${k===demoStep-1?"appear":""}">${s}</li>`).join("")}</ul>
+    ${demoStep>steps.length?`<p class="pas appear">Passive: ${esc(d.passive)}</p>`:""}`;
+  $("demoNext").textContent=demoStep>steps.length?"Сначала":demoStep===steps.length?"Показать пассив":"Следующий шаг";
+}
+$("demoNext").onclick=()=>{
+  const max=5;demoStep=demoStep>=max?0:demoStep+1;
+  renderDemo();if(demoStep===max)speak(DEMOS[demoI].passive);
+};
+$("demoOther").onclick=()=>{demoI=(demoI+1)%DEMOS.length;demoStep=0;renderDemo()};
+
+// ---------- упражнения ----------
+let items, score, mistakes, errList, startTime, finished, result;
+// каждый пункт: {done, first, label}
+function reg(label){const it={done:false,first:true,label};items.push(it);return it}
+function wrongTry(it){if(it.first){it.first=false;mistakes++;errList.push(it.label)}}
+function rightTry(it){if(it.done)return;it.done=true;if(it.first)score++;hud();if(items.every(x=>x.done))setTimeout(()=>finish(false),600)}
+function hud(){
+  const d=items.filter(x=>x.done).length;
+  $("doneTxt").textContent=`${d} / ${items.length}`;
+  $("scoreTxt").textContent=`баллы: ${score}`;
+  $("bar").style.width=(d/items.length*100)+"%";
+}
+function section(n,title,task){
+  const s=document.createElement("section");
+  s.innerHTML=`<h2><span class="n">${n}.</span>${title}</h2><p class="task">${task}</p>`;
+  $("exercises").appendChild(s);return s;
+}
+function numbered(k,html){return `<span class="num">${k+1}</span>${html}`}
+
+function buildExercises(){
+  $("exercises").innerHTML="";items=[];
+  // 1
+  let s=section(1,"Active или Passive?","Прочитайте предложение и решите, какой это залог.");
+  TYPE.forEach(([t,ans],k)=>{
+    const it=reg(t),d=document.createElement("div");d.className="item";
+    d.innerHTML=`<div class="s">${numbered(k,esc(t))}</div><div class="row"><button data-v="active">Active</button><button data-v="passive">Passive</button></div>`;
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(it.done)return;
+      if(b.dataset.v===ans){b.classList.add("right");d.querySelectorAll("button").forEach(x=>x.disabled=true);speak(t);rightTry(it)}
+      else{b.classList.add("wrong");b.disabled=true;shake(b);wrongTry(it)}
+    });
+    s.appendChild(d);
+  });
+  // 2
+  s=section(2,"Выберите форму be","Посмотрите на подсказки времени: every day, yesterday, tomorrow…");
+  BE.forEach(([t,ans,hint],k)=>{
+    const it=reg(t),d=document.createElement("div");d.className="item";
+    d.innerHTML=`<div class="s">${numbered(k,esc(t).replace("___",'<span class="gap">&nbsp;</span>'))}</div>
+      <div class="row">${BE_FORMS.map(f=>`<button>${esc(f)}</button>`).join("")}</div><div class="hint"></div>`;
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(it.done)return;
+      if(b.textContent===ans){
+        b.classList.add("right");d.querySelectorAll("button").forEach(x=>x.disabled=true);
+        const g=d.querySelector(".gap");g.textContent=ans;g.classList.add("ok");d.querySelector(".hint").textContent="";
+        speak(t.replace("___",ans));rightTry(it);
+      }else{b.classList.add("wrong");b.disabled=true;shake(b);d.querySelector(".hint").textContent="Подсказка: "+hint;wrongTry(it)}
+    });
+    s.appendChild(d);
+  });
+  // 3
+  s=section(3,"Третья форма глагола","Впишите глагол в 3-й форме (V3) и нажмите Enter или «Проверить».");
+  V3.forEach(([t,verb],k)=>{
+    const ans=t.match(/\{(.+?)\}/)[1],full=t.replace(/[{}]/g,"");
+    const it=reg(verb+" → "+ans),d=document.createElement("div");d.className="item";
+    d.innerHTML=`<div class="s">${numbered(k,esc(t).replace(/\{.+?\}/,`<input class="v3" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Третья форма глагола ${esc(verb)}"> <small style="color:var(--muted)">(${esc(verb)})</small>`))}</div>
+      <div class="row"><button class="chk">Проверить</button><button class="show">Показать ответ</button></div><div class="hint"></div>`;
+    const inp=d.querySelector("input");
+    const check=()=>{
+      if(it.done)return;
+      if(!inp.value.trim()){shake(inp);return}
+      if(inp.value.trim().toLowerCase()===ans.toLowerCase()){
+        inp.className="v3 ok";inp.readOnly=true;d.querySelector(".hint").textContent="";
+        d.querySelectorAll("button").forEach(x=>x.disabled=true);speak(full);rightTry(it);
+      }else{
+        inp.className="v3 bad";shake(inp);wrongTry(it);
+        d.querySelector(".hint").textContent=ans.endsWith("ed")?"Это правильный глагол: добавьте -ed.":"Это неправильный глагол: вспомните третью колонку.";
+      }
+    };
+    d.querySelector(".chk").onclick=check;
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+    d.querySelector(".show").onclick=()=>{if(it.done)return;wrongTry(it);inp.value=ans;check()};
+    s.appendChild(d);
+  });
+  // 4
+  s=section(4,"Соберите предложение","Нажимайте на части по порядку. Нажмите на часть в строке, чтобы вернуть её.");
+  ORDER.forEach((line,k)=>{
+    const parts=line.split("|"),full=parts.join(" ");
+    const it=reg(full),d=document.createElement("div");d.className="item";
+    let order=shuffle(parts.map((p,i)=>i));
+    if(order.every((v,i)=>v===i))order.reverse();
+    d.innerHTML=`<div class="s"><span class="num">${k+1}</span></div><div class="line" aria-label="Ваше предложение"></div>
+      <div class="tiles">${order.map(i=>`<button class="tile" data-i="${i}">${esc(parts[i])}</button>`).join("")}</div>
+      <div class="row"><button class="chk">Проверить</button><button class="rst">Сбросить</button></div><div class="hint"></div>`;
+    const lineEl=d.querySelector(".line");let built=[];
+    const draw=()=>{
+      lineEl.innerHTML=built.map((i,p)=>`<button class="tile" data-p="${p}">${esc(parts[i])}</button>`).join("");
+      lineEl.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(it.done)return;built.splice(+b.dataset.p,1);sync()});
+    };
+    const sync=()=>{d.querySelectorAll(".tiles .tile").forEach(t=>t.classList.toggle("used",built.includes(+t.dataset.i)));draw()};
+    d.querySelectorAll(".tiles .tile").forEach(t=>t.onclick=()=>{if(it.done||built.includes(+t.dataset.i))return;built.push(+t.dataset.i);sync()});
+    d.querySelector(".rst").onclick=()=>{if(it.done)return;built=[];sync()};
+    d.querySelector(".chk").onclick=()=>{
+      if(it.done)return;
+      if(built.length<parts.length){d.querySelector(".hint").textContent="Используйте все части.";shake(lineEl);return}
+      if(built.every((v,i)=>v===i)){
+        lineEl.classList.add("ok");d.querySelector(".hint").textContent="";
+        d.querySelectorAll(".row button").forEach(x=>x.disabled=true);speak(full);rightTry(it);
+      }else{wrongTry(it);shake(lineEl);d.querySelector(".hint").textContent="Порядок не тот. Помните: предмет + be + V3."}
+    };
+    s.appendChild(d);
+  });
+  // 5
+  s=section(5,"Active → Passive","Выберите правильное пассивное предложение.");
+  CHANGE.forEach((c,k)=>{
+    const it=reg(c.active),d=document.createElement("div");d.className="item";
+    const opts=shuffle([c.ok,...c.no]);
+    d.innerHTML=`<div class="s">${numbered(k,esc(c.active))}</div><div class="opts">${opts.map(o=>`<button>${esc(o)}</button>`).join("")}</div><div class="hint"></div>`;
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(it.done)return;
+      if(b.textContent===c.ok){b.classList.add("right");d.querySelectorAll("button").forEach(x=>x.disabled=true);d.querySelector(".hint").textContent="";speak(c.ok);rightTry(it)}
+      else{b.classList.add("wrong");b.disabled=true;shake(b);wrongTry(it);d.querySelector(".hint").textContent="Проверьте время и 3-ю форму глагола."}
+    });
+    s.appendChild(d);
+  });
+}
+
+// ---------- результат и код ----------
+const SALT="passive-voice-lesson-2026";
+function makeCode(name,s,m){
+  const str=[SALT,name.trim().toLowerCase(),s,m].join("|");
+  let x=2166136261;
+  for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return x.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(имя не указано)",r=result;
+  $("report").textContent=`Passive Voice: мини-урок\nИмя: ${name}\nБаллы: ${r.s}/${items.length}\nОшибки: ${r.m}\nВыполнено: ${r.d}/${items.length}\nВремя: ${r.time}`+
+    (r.err.length?`\nОшибки были в:\n– ${r.err.join("\n– ")}`:"")+`\nКод: ${makeCode(name,r.s,r.m)}`;
+}
+function finish(early){
+  if(finished)return;finished=true;
+  result={s:score,m:mistakes,d:items.filter(x=>x.done).length,err:errList.slice(),time:fmt(Math.floor((Date.now()-startTime)/1000))};
+  $("resTitle").textContent=early?`Выполнено ${result.d} из ${items.length}`:"Урок пройден!";
+  buildReport();$("result").classList.add("show");
+  $("result").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+}
+$("studentName").oninput=()=>{if(result)buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,m=$("copied");
+  try{await navigator.clipboard.writeText(t);m.textContent="Скопировано"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("report"));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent="Текст выделен, нажмите Ctrl+C"}
+};
+$("endBtn").onclick=()=>{if(finished)return;if(confirm("Закончить и получить результат?"))finish(true)};
+$("restartBtn").onclick=()=>{if(confirm("Начать заново? Ответы пропадут."))start()};
+const teacherMode=()=>$("teacher").classList.toggle("show",location.hash==="#teacher");
+teacherMode();window.addEventListener("hashchange",teacherMode);
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tScore").split("/")[0].trim(),v("tMist"))===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok-t">Код верный, результат не изменён.</span>':'<span class="bad-t">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+function start(){
+  score=0;mistakes=0;errList=[];startTime=Date.now();finished=false;result=null;
+  $("result").classList.remove("show");$("copied").textContent="";
+  demoI=0;demoStep=0;renderDemo();
+  buildExercises();hud();
+}
+start();
+</script>
+</body>
+</html>
