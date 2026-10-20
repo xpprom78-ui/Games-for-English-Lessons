@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collocation Practice: Trust is key</title>
+<style>
+:root{
+  --bg:#eaf2fc; --surface:#ffffff; --ink:#0d2147; --muted:#4a6390;
+  --accent:#1f6fe0; --accent-ink:#ffffff; --line:#c7d8f2;
+  --ok:#1d8a52; --ok-bg:#dff5e8; --bad:#c23b3b; --bad-bg:#fbe3e3; --sel:#d6e6ff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#081630; --surface:#0f2246; --ink:#e6efff; --muted:#9db4dc;
+    --accent:#4d93ff; --accent-ink:#04122b; --line:#24427a;
+    --ok:#5fd897; --ok-bg:#123a28; --bad:#ff8080; --bad-bg:#43191c; --sel:#1d3c75;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Poppins","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:1.7rem;margin:0 0 4px;letter-spacing:.01em}
+.sub{color:var(--muted);margin:0 0 22px}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tab{border:2px solid var(--accent);background:transparent;color:var(--ink);padding:9px 18px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.tab:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.hidden{display:none}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chip{display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:10px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;transition:background .15s}
+.chip:hover{background:var(--sel)}
+.chip.sel{background:var(--sel);border-color:var(--accent)}
+.chip.done{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);cursor:default}
+.chip.wrong{background:var(--bad-bg);border-color:var(--bad);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion: reduce){.chip.wrong{animation:none}}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;flex-wrap:wrap}
+.score{font-weight:700}
+.btn{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.sentence{font-size:1.25rem;line-height:1.6;margin:6px 0 16px}
+.gapline{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:180px;padding:11px 14px;font:inherit;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.fb{min-height:1.6em;margin-top:12px;font-weight:600}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.full{color:var(--muted);margin-top:4px}
+.progress{color:var(--muted);font-size:.95rem;margin-bottom:6px}
+@media (max-width:560px){.cols{grid-template-columns:1fr 1fr;gap:8px}.chip{padding:10px;font-size:.92rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Trust is key: collocations</h1>
+  <p class="sub">Practise the word partnerships from the article.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="match">1. Match</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="gap">2. Fill the gap</button>
+  </div>
+
+  <section id="match" class="panel">
+    <p style="margin-top:0">Click a beginning, then the ending that goes with it.</p>
+    <div class="cols"><div id="left"></div><div id="right"></div></div>
+    <div class="bar">
+      <span class="score" id="mScore"></span>
+      <button class="btn" id="newRound">New round</button>
+    </div>
+  </section>
+
+  <section id="gap" class="panel hidden">
+    <div class="progress" id="gProg"></div>
+    <div class="sentence" id="gSent"></div>
+    <div class="gapline">
+      <input type="text" id="gIn" autocomplete="off" aria-label="Your answer">
+      <button class="btn" id="gCheck">Check</button>
+      <button class="btn ghost" id="gHint">Hint</button>
+    </div>
+    <div class="fb" id="gFb" aria-live="polite"></div>
+    <div class="full" id="gFull"></div>
+    <div class="bar">
+      <span class="score" id="gScore"></span>
+      <button class="btn" id="gNext">Next</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const ITEMS = [
+  {a:"a hard nut",      b:"to crack",                     s:"Getting the two departments to cooperate is a hard ___ to crack.", ans:["nut"]},
+  {a:"a logistical",    b:"nightmare",                    s:"Moving 300 people to the new office was a logistical ___.", ans:["nightmare"]},
+  {a:"hide",            b:"behind a computer",            s:"He never talks to anyone. He just hides ___ his computer.", ans:["behind"]},
+  {a:"screen",          b:"your calls",                   s:"I always ___ my calls when I'm busy.", ans:["screen"]},
+  {a:"bombard people",  b:"with e-mails",                 s:"Please don't bombard the team ___ e-mails about the party.", ans:["with"]},
+  {a:"hit the",         b:"'reply all' button",           s:"Think twice before you hit the 'reply ___' button.", ans:["all"]},
+  {a:"information",     b:"overload",                     s:"After the three-day conference I had information ___.", ans:["overload"]},
+  {a:"an error of",     b:"judgment",                     s:"Hiring him without an interview was an error of ___.", ans:["judgment","judgement"]},
+  {a:"share",           b:"information",                  s:"Departments must ___ information if they want to work together.", ans:["share"]},
+  {a:"allocate",        b:"a set period of time",         s:"Try to ___ a set period of time to deal with e-mail.", ans:["allocate"]},
+  {a:"duplicate",       b:"the same information",         s:"With the new system we don't ___ the same information any more.", ans:["duplicate"]},
+  {a:"interrupt",       b:"a meeting",                    s:"Please don't ___ the meeting to check your phone.", ans:["interrupt"]}
+];
+const shuffle = arr => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+/* Tabs */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", x===t));
+  document.getElementById("match").classList.toggle("hidden", t.dataset.tab!=="match");
+  document.getElementById("gap").classList.toggle("hidden", t.dataset.tab!=="gap");
+}));
+
+/* Match mode */
+let picked=null, matched=0, round=[];
+function newRound(){
+  round = shuffle(ITEMS).slice(0,6); matched=0; picked=null;
+  const L=document.getElementById("left"), R=document.getElementById("right");
+  L.innerHTML=""; R.innerHTML="";
+  round.forEach((it,i)=>{
+    const b=document.createElement("button"); b.className="chip"; b.textContent=it.a+" …"; b.dataset.id=i;
+    b.onclick=()=>{ if(b.classList.contains("done"))return; L.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); b.classList.add("sel"); picked=b; };
+    L.appendChild(b);
+  });
+  shuffle(round.map((it,i)=>({it,i}))).forEach(({it,i})=>{
+    const b=document.createElement("button"); b.className="chip"; b.textContent="… "+it.b; b.dataset.id=i;
+    b.onclick=()=>{
+      if(!picked||b.classList.contains("done"))return;
+      if(picked.dataset.id===b.dataset.id){
+        picked.classList.remove("sel"); picked.classList.add("done"); b.classList.add("done");
+        picked.textContent=round[i].a+" "+round[i].b; picked=null; matched++; updM();
+      } else {
+        b.classList.add("wrong"); setTimeout(()=>b.classList.remove("wrong"),400);
+      }
+    };
+    R.appendChild(b);
+  });
+  updM();
+}
+function updM(){ document.getElementById("mScore").textContent = matched===6 ? "Well done! 6 / 6" : `Matched: ${matched} / 6`; }
+document.getElementById("newRound").onclick=newRound;
+newRound();
+
+/* Gap mode */
+let order=shuffle(ITEMS), gi=0, gScore=0, answered=false, hinted=false;
+const gIn=document.getElementById("gIn"), gFb=document.getElementById("gFb");
+function showGap(){
+  if(gi>=order.length){
+    document.getElementById("gProg").textContent="Finished!";
+    document.getElementById("gSent").textContent=`Your score: ${gScore} / ${order.length}`;
+    document.getElementById("gNext").textContent="Start again";
+    gIn.disabled=true; gFb.textContent=""; document.getElementById("gFull").textContent="";
+    return;
+  }
+  const it=order[gi]; answered=false; hinted=false;
+  document.getElementById("gProg").textContent=`Sentence ${gi+1} of ${order.length}`;
+  document.getElementById("gSent").textContent=it.s.replace("___","______");
+  document.getElementById("gNext").textContent="Next";
+  gIn.disabled=false; gIn.value=""; gFb.textContent=""; gFb.className="fb";
+  document.getElementById("gFull").textContent="";
+  document.getElementById("gScore").textContent=`Score: ${gScore}`;
+  gIn.focus();
+}
+function check(){
+  if(answered||gi>=order.length)return;
+  const it=order[gi], v=gIn.value.trim().toLowerCase();
+  if(!v)return;
+  answered=true;
+  if(it.ans.includes(v)){ if(!hinted)gScore++; gFb.textContent= hinted?"Correct (with a hint).":"Correct!"; gFb.className="fb ok"; }
+  else { gFb.textContent=`Not quite. The answer is "${it.ans[0]}".`; gFb.className="fb bad"; }
+  document.getElementById("gFull").textContent="Collocation: "+it.a+" "+it.b;
+  document.getElementById("gScore").textContent=`Score: ${gScore}`;
+}
+document.getElementById("gCheck").onclick=check;
+gIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ answered?next():check(); }});
+document.getElementById("gHint").onclick=()=>{
+  if(answered||gi>=order.length)return;
+  hinted=true; const w=order[gi].ans[0];
+  gFb.textContent=`Starts with "${w[0]}", ${w.length} letters.`; gFb.className="fb";
+};
+function next(){
+  if(gi>=order.length){ order=shuffle(ITEMS); gi=0; gScore=0; }
+  else gi++;
+  showGap();
+}
+document.getElementById("gNext").onclick=next;
+showGap();
+</script>
+</body>
+</html>
