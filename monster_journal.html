@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monster Journal: времена глагола (B1)</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFCF8; --grid:#D5E4EE; --ink:#1F3A93; --margin:#E0525A;
+    --text:#26303B; --muted:#6B7785; --good:#1E7B3A; --hl:#FFE970;
+    --pumpkin:#E8772E; --slime:#D7E8C8; --fur:#CDBBA7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);font-family:Manrope,system-ui,sans-serif;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+  .page{max-width:860px;margin:0 auto;padding:24px 16px 48px 52px;position:relative}
+  .page::before{content:"";position:fixed;top:0;bottom:0;left:34px;width:2px;background:var(--margin);opacity:.55}
+  header{display:flex;gap:14px;align-items:flex-start}
+  header .pump{width:64px;flex:none;margin-top:4px}
+  h1{font-family:Caveat,cursive;font-size:56px;line-height:1;margin:0 0 4px;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left}
+  .sub{color:var(--muted);margin:0 0 14px;max-width:62ch}
+  .hud{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:4px 0 20px}
+  .stat{font-family:Caveat,cursive;font-size:30px;color:var(--ink)}
+  .progress{flex:1;min-width:140px;height:10px;border:2px solid var(--ink);background:#fff;border-radius:6px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--pumpkin);transition:width .4s}
+  label.tog{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+
+  button{font:600 14px Manrope,sans-serif;padding:9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;border-radius:3px}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.stage:focus-visible{outline:3px solid var(--margin);outline-offset:3px}
+  button:disabled{cursor:default}
+  kbd{font:700 11px Manrope,sans-serif;border:1.5px solid currentColor;border-radius:3px;padding:0 4px;opacity:.7}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+
+  /* doodles */
+  svg .s{stroke:var(--ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  svg .t{stroke-width:2}
+  svg .n{fill:none} svg .w{fill:#fff} svg .i{fill:var(--ink)} svg .h{fill:var(--hl)}
+  svg .p{fill:var(--pumpkin)} svg .r{fill:var(--margin)} svg .g{fill:var(--slime)} svg .f{fill:var(--fur)}
+
+  /* map */
+  .intro{max-width:64ch;margin:0 0 18px;line-height:1.55}
+  .map{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:22px 18px}
+  .house{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;
+    background:#fff;color:var(--text);border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);padding:12px 14px 14px;border-radius:2px;transition:transform .15s,box-shadow .15s}
+  .house:nth-child(odd){transform:rotate(-.7deg)} .house:nth-child(even){transform:rotate(.6deg)}
+  .house:hover{background:#fff;color:var(--text);transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+  .house svg{width:76px;height:76px;align-self:center;margin:2px 0 6px}
+  .hno{font-size:12px;color:var(--muted)}
+  .hname{font-family:Caveat,cursive;font-size:30px;line-height:1;color:var(--ink)}
+  .hplace{font-size:13px;color:var(--muted)}
+  .htask{font-weight:800;font-size:14px;margin-top:4px}
+  .hstat{font-size:13px;margin-top:6px;color:var(--muted)}
+  .house.done .hstat{font-family:Caveat,cursive;font-size:24px;color:var(--good);border:2px solid var(--good);padding:0 8px;transform:rotate(-4deg);margin-top:8px}
+  .house.boss{border-color:var(--margin)}
+
+  /* room */
+  .roomtop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .counter{font-family:Caveat,cursive;font-size:28px;color:var(--ink)}
+  .monster{display:flex;gap:16px;align-items:flex-start;margin-bottom:10px}
+  .mon{flex:none;width:118px}
+  .mon svg{width:118px;height:118px;display:block}
+  .bubble{position:relative;flex:1;background:#fff;border:2px solid var(--text);padding:10px 44px 10px 14px;border-radius:14px 14px 14px 2px}
+  .bubble::before{content:"";position:absolute;left:-12px;top:26px;border:10px solid transparent;border-right-color:var(--text)}
+  .bubble p{margin:2px 0 0;line-height:1.5}
+  .mname{font-family:Caveat,cursive;font-size:26px;color:var(--ink);font-weight:700}
+  .say{position:absolute;right:6px;top:6px;border:none;background:none;padding:4px 6px;font-size:18px}
+  .say:hover{background:#EEF2FA;color:var(--ink)}
+  h2.rtitle{font-family:Caveat,cursive;font-size:42px;line-height:1;color:var(--ink);margin:14px 0 4px}
+  .task{margin:0 0 10px;color:var(--text)}
+  .task .keys{color:var(--muted);font-size:13px}
+  details.rule{border:2px dashed var(--ink);background:#fff;padding:6px 12px;margin:0 0 14px}
+  details.rule summary{font-family:Caveat,cursive;font-size:24px;color:var(--ink);cursor:pointer}
+  details.rule div{white-space:pre-line;line-height:1.6;padding:4px 0 6px}
+  .mini{height:6px;background:#fff;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;margin-bottom:16px}
+  .mini i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+  .stage{min-height:150px}
+  .stage:focus{outline:none}
+
+  .chip{font:800 30px Manrope,sans-serif;text-align:center;padding:18px 10px;margin:4px 0 18px;color:var(--text)}
+  .chip span{background:linear-gradient(transparent 50%,var(--hl) 50% 92%,transparent 92%);padding:0 6px}
+  .bins{display:grid;gap:14px}
+  .bins2{grid-template-columns:1fr 1fr}.bins3{grid-template-columns:1fr 1fr 1fr}
+  .bin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 12px;border-radius:2px 2px 26px 26px;box-shadow:4px 4px 0 var(--ink)}
+  .blabel{font-family:Caveat,cursive;font-size:34px;line-height:1}
+  .bhint{font-size:12px;opacity:.8}
+
+  .sentence{font-size:22px;line-height:1.7;margin:6px 0 18px}
+  .gap{display:inline-block;min-width:110px;border-bottom:2px solid var(--ink);text-align:center;padding:0 4px}
+  .gap.filled{background:linear-gradient(transparent 50%,var(--hl) 50% 92%,transparent 92%);font-weight:800}
+  .opts{display:grid;gap:10px}
+  .opt{text-align:left;font-size:18px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+  .right,.right:hover,.right:disabled{border-color:var(--good)!important;background:#E8F4EC!important;color:var(--good)!important}
+  .wrong,.wrong:hover,.wrong:disabled{border-color:var(--margin)!important;background:#FDECEC!important;color:var(--margin)!important}
+  .opts button:disabled:not(.right):not(.wrong),.bins button:disabled:not(.right):not(.wrong){opacity:.45}
+
+  .line{min-height:62px;border-bottom:2px solid var(--ink);padding:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end}
+  .line:empty::after{content:"Нажимайте на слова снизу";color:var(--muted);font-size:14px}
+  .pool{display:flex;flex-wrap:wrap;gap:8px;padding:16px 0 4px;min-height:60px}
+  .tile{font-size:18px;padding:8px 12px;box-shadow:3px 3px 0 var(--ink)}
+  .line .tile{background:var(--hl);border-color:var(--text);color:var(--text);box-shadow:none}
+
+  .fixs{line-height:2.2}
+  .tok{font-size:21px;padding:2px 5px;border:2px solid transparent;background:none;color:var(--text);border-radius:3px}
+  .tok:hover{background:#EEF2FA;color:var(--ink);border-color:var(--grid)}
+  .tok.found{background:#FDECEC;border-color:var(--margin);color:var(--margin);text-decoration:line-through}
+  .tok.miss{border-color:var(--muted);color:var(--muted)}
+  .tok:disabled{cursor:default}
+  #fixopts .opts{margin-top:4px}
+
+  .tin{font:700 20px Manrope,sans-serif;border:none;border-bottom:2px solid var(--ink);background:#FFFBE0;padding:2px 6px;color:var(--text);max-width:100%}
+  .tin.right{background:#E8F4EC}.tin.wrong{background:#FDECEC}
+  .hint{color:var(--muted);font-size:17px}
+
+  .letter{background:#fff;border:2px solid var(--text);box-shadow:6px 6px 0 var(--ink);padding:18px 20px;font-size:18px;line-height:2.3;
+    background-image:repeating-linear-gradient(transparent 0 40px,#DCE8F0 40px 41px);background-position:0 14px}
+  .letter select{font:600 16px Manrope,sans-serif;border:2px solid var(--ink);border-radius:3px;padding:2px 4px;background:#FFFBE0;color:var(--text)}
+  .letter select.right{background:#E8F4EC}.letter select.wrong{background:#FDECEC}
+  .corr{color:var(--good);font-weight:800;margin-left:4px}
+
+  .hp{display:flex;gap:10px;align-items:center;font-family:Caveat,cursive;font-size:24px;color:var(--margin);margin-bottom:8px}
+  .hpbar,.timer{flex:1;height:12px;border:2px solid var(--text);background:#fff;border-radius:6px;overflow:hidden}
+  .hpbar i{display:block;height:100%;background:var(--margin);transition:width .4s}
+  .timer{margin-bottom:14px}.timer i{display:block;height:100%;background:var(--pumpkin)}
+  .bossstart{text-align:center;padding:20px 0}
+  .bossstart button{font-size:20px;padding:14px 28px}
+
+  .fb{min-height:28px;margin-top:16px;line-height:1.55}
+  .fb .ok{color:var(--good);font-weight:800}.fb .bad{color:var(--margin);font-weight:800}
+  .fb small{color:var(--muted);font-size:14px}
+  .next{font-size:17px;padding:11px 22px;background:var(--ink);color:#fff}
+  .next:hover{background:#fff;color:var(--ink)}
+
+  .summary .big{font-family:Caveat,cursive;font-size:64px;color:var(--ink);line-height:1}
+  .summary ul{margin:6px 0 0;padding-left:20px;color:var(--margin)}
+  .talk{margin-top:18px;background:#fff;border:2px solid var(--text);padding:12px 16px 14px;box-shadow:6px 6px 0 var(--pumpkin)}
+  .talk h3{font-family:Caveat,cursive;font-size:30px;color:var(--ink);margin:0}
+  .talk p{margin:2px 0 8px;color:var(--muted);font-size:14px}
+  .talk li{margin:6px 0;line-height:1.5}
+  .talk .say{position:static;font-size:15px;padding:0 4px}
+
+  .result{display:none;margin-top:28px;padding:14px 16px;border:2px dashed var(--margin);background:#fff}
+  .result.show{display:block}
+  .result b{font-family:Caveat,cursive;font-size:34px;color:var(--margin);display:block}
+  .result input,.teacher input{font:600 15px Manrope,sans-serif;padding:8px 10px;border:2px solid var(--ink);border-radius:3px;margin:6px 8px 6px 0}
+  .result input{width:100%;max-width:320px}
+  .report{white-space:pre-line;background:#F3F6F9;padding:10px 12px;margin:10px 0;font-weight:600;border-left:4px solid var(--ink)}
+  .teacher{margin-top:28px;padding:14px 16px;border:2px solid var(--ink);background:#fff;display:none}
+  .teacher.show{display:block}
+  .teacher h2{font-family:Caveat,cursive;font-size:32px;margin:0 0 6px;color:var(--ink)}
+  .ok{color:var(--good);font-weight:800}.bad{color:var(--margin);font-weight:800}
+
+  .happy{animation:hop .5s}
+  .shake{animation:shake .45s}
+  @keyframes hop{0%,100%{transform:none}40%{transform:translateY(-10px) rotate(-3deg)}}
+  @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+
+  @media (max-width:600px){
+    .page{padding-left:44px}
+    h1{font-size:44px} header .pump{width:48px}
+    .bins3{grid-template-columns:1fr}
+    .mon,.mon svg{width:84px;height:84px}
+    .chip{font-size:24px}.sentence{font-size:19px}.tok{font-size:18px}
+    .letter{font-size:16px;padding:14px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .house:nth-child(odd),.house:nth-child(even){transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <svg class="pump" viewBox="0 0 64 64" aria-hidden="true"><path class="s n" d="M32 16 Q31 8 38 5"/><ellipse class="s p" cx="21" cy="38" rx="13" ry="19"/><ellipse class="s p" cx="43" cy="38" rx="13" ry="19"/><ellipse class="s p" cx="32" cy="38" rx="12" ry="20"/><path class="i" d="M22 32 l5 -6 l5 6z M34 32 l5 -6 l5 6z M22 44 q10 8 20 0 l-4 3 l-3 -3 l-3 3 l-3 -3 l-3 3z"/></svg>
+    <div>
+      <h1>Monster Journal</h1>
+      <p class="sub">Тетрадь охотника на монстров. Present Perfect, Past Simple и Present Continuous, уровень B1.</p>
+    </div>
+  </header>
+  <div class="hud">
+    <span class="stat" id="totalStat"></span>
+    <div class="progress"><i id="bar"></i></div>
+    <label class="tog"><input type="checkbox" id="sound" checked> Озвучка</label>
+  </div>
+
+  <main id="view"></main>
+
+  <section class="result" id="result">
+    <b id="resTitle">Результат</b>
+    <div>Впишите своё имя, скопируйте результат и отправьте его учителю в ответе к заданию.</div>
+    <input id="studentName" placeholder="Имя и фамилия" autocomplete="name">
+    <div class="report" id="report"></div>
+    <div class="row"><button id="copyBtn">Скопировать результат</button><span id="copied"></span></div>
+  </section>
+
+  <section class="teacher" id="teacher">
+    <h2>Проверка кода</h2>
+    <div>Введите данные из результата ученика.</div>
+    <div class="row">
+      <input id="tName" placeholder="Имя">
+      <input id="tCorrect" placeholder="Верно" size="7">
+      <input id="tDone" placeholder="Домов" size="6">
+      <input id="tCode" placeholder="Код" size="8">
+      <button id="tCheck">Проверить</button>
+    </div>
+    <div id="tResult" aria-live="polite"></div>
+  </section>
+</div>
+
+<script>
+/* =====================================================================
+   СОДЕРЖАНИЕ ИГРЫ. Меняйте тексты здесь, остальной код трогать не нужно.
+   Количество заданий считается само.
+
+   Форматы заданий:
+   sort   — ["выражение", "id коробки"]
+   choose — ["Предложение с ___", ["верный ответ", "неверный", "неверный"], "пояснение"]
+            (верный ответ всегда первый, игра сама перемешает)
+   build  — "Слова / разделены / косой чертой."
+   fix    — ["Предложение с [ошибкой] в скобках.", "исправление", ["неверный", "неверный"], "пояснение"]
+   type   — "Bones {is dancing|'s dancing} (dance) on the roof."
+            в фигурных скобках ответ (через | можно дать варианты), в круглых подсказка
+   text   — текст письма, пропуски {верный|неверный|неверный}
+   boss   — как choose; seconds — сколько секунд на вопрос
+   ===================================================================== */
+const ROOMS = [
+  {
+    id:"vampire", monster:"vampire", name:"Count Velvet", place:"Склеп под старой церковью",
+    type:"sort", title:"For или since?",
+    intro:"Good evening! I have lived in this crypt for six hundred years. Or is it since 1424? My memory is full of dust. Please put my time words into the right coffin.",
+    task:"Решите, что подходит к выражению: for (период) или since (точка начала).",
+    speakWithBin:true,
+    bins:[{id:"for",label:"for",hint:"период",hot:"f"},{id:"since",label:"since",hint:"точка начала",hot:"s"}],
+    items:[
+      ["three centuries","for"],["ages","for"],["a long time","for"],["two weeks","for"],["ten minutes","for"],
+      ["600 years","for"],["a couple of days","for"],["half an hour","for"],["months","for"],["a while","for"],
+      ["midnight","since"],["1897","since"],["last Halloween","since"],["Monday","since"],["I was a child","since"],
+      ["the full moon","since"],["this morning","since"],["the castle burned down","since"],["six o'clock","since"],
+      ["October","since"],["the day we met","since"]
+    ],
+    rule:"for + период: for two days, for ages, for a long time.\nsince + точка начала: since Monday, since 2010, since I was a child.\nОба обычно идут с Present Perfect: She has lived here for 10 years / since 2015.\nВопрос «как долго?»: How long have you…?",
+    talk:["How long have you lived in your home?","How long have you known your best friend?","What is the oldest thing you own? How long have you had it?"]
+  },
+  {
+    id:"zombie", monster:"zombie", name:"Zed", place:"Кладбище за холмом",
+    type:"sort", title:"Маркеры времени",
+    intro:"Brains... I mean, markers! I dropped my word cards and now they are all mixed up. Which grave does each one belong to?",
+    task:"Определите, какое время подсказывает каждый маркер.",
+    bins:[{id:"ps",label:"Past Simple",hint:"I went",hot:"1"},{id:"pp",label:"Present Perfect",hint:"I have gone",hot:"2"},{id:"pc",label:"Present Continuous",hint:"I am going",hot:"3"}],
+    items:[
+      ["yesterday","ps"],["last night","ps"],["two days ago","ps"],["in 1999","ps"],["when I was young","ps"],["the day before yesterday","ps"],["last Halloween","ps"],
+      ["already","pp"],["yet","pp"],["just","pp"],["ever","pp"],["never","pp"],["so far","pp"],["recently","pp"],["lately","pp"],
+      ["now","pc"],["right now","pc"],["at the moment","pc"],["Look!","pc"],["Listen!","pc"],["currently","pc"],["at present","pc"]
+    ],
+    rule:"Past Simple: yesterday, last…, …ago, in 1999, when I was… Время закончилось.\nPresent Perfect: already, just, yet, ever, never, so far, recently, lately. Результат или опыт к настоящему моменту.\nPresent Continuous: now, right now, at the moment, currently, Look! Listen! Действие идёт прямо сейчас.",
+    talk:["What did you do last weekend?","What have you done this week that you are proud of?","What are you reading or watching these days?"]
+  },
+  {
+    id:"ghost", monster:"ghost", name:"Wendy", place:"Старый дом на холме",
+    type:"choose", title:"Выбери форму",
+    intro:"Boo! I have haunted this house since 1850, but I still mix up my tenses. Choose the right form for each of my stories.",
+    task:"Выберите верную форму глагола.",
+    items:[
+      ["Wendy ___ in this house since 1850.",["has lived","lived","is living"],"since 1850, и до сих пор: Present Perfect."],
+      ["She ___ the cook with a terrible scream last night.",["scared","has scared","is scaring"],"last night — точное время в прошлом: Past Simple."],
+      ["Shh! The ghosts ___ a secret meeting in the attic.",["are having","have had","had"],"Shh! — это происходит прямо сейчас: Present Continuous."],
+      ["___ a ghost in your life?",["Have you ever seen","Are you ever seeing","Have you ever saw"],"Опыт в жизни: Have you ever + 3-я форма (seen)."],
+      ["Wendy ___ her old diary yet.",["hasn't found","hasn't find","isn't finding"],"yet в отрицании: hasn't + 3-я форма (found)."],
+      ["When ___ into the house? — In 1850.",["did she move","has she moved","she moved"],"When…? спрашивает о точном времени: Past Simple."],
+      ["We ___ the haunted tower two hours ago.",["visited","have visited","are visiting"],"…ago: Past Simple."],
+      ["How long ___ Count Velvet?",["have you known","do you know","are you knowing"],"How long…? до сих пор: Present Perfect. know — глагол состояния."],
+      ["I ___ the answer, but I can't tell you.",["know","am knowing","have knew"],"know не ставится в Continuous."],
+      ["Oh no! The witch ___ her broom.",["has just broken","has just broke","is just breaking"],"just — только что: has just + 3-я форма (broken)."],
+      ["This is the first time I ___ in a haunted hotel.",["have stayed","stayed","am staying"],"This is the first time… требует Present Perfect."],
+      ["Where is Igor? — He ___ to the market. He'll be back soon.",["has gone","has been","have gone"],"has gone — ушёл и ещё не вернулся. has been — был и вернулся."],
+      ["___ to Transylvania? — Yes, twice.",["Have you ever been","Have you ever gone","Did you ever been"],"Опыт поездок: have been."],
+      ["These days the Count ___ a strict diet: only tomato juice.",["is following","has followed","followed"],"These days — временная ситуация сейчас: Present Continuous."],
+      ["I ___ the werewolf at the party yesterday, but he didn't see me.",["saw","have seen","am seeing"],"yesterday: Past Simple."],
+      ["We ___ any monsters so far tonight.",["haven't met","didn't meet","aren't meeting"],"so far — пока что: Present Perfect."],
+      ["It's three years since we last ___.",["met","have met","are meeting"],"It's … since + Past Simple: since we last met."],
+      ["We ___ the witch tomorrow at 9 pm. It's in my diary.",["are meeting","have met","met"],"Договорённость на будущее: Present Continuous."]
+    ],
+    rule:"Есть точное время в прошлом: Past Simple (last night, in 1850, two hours ago, When…?).\nСвязь с настоящим, опыт, «до сих пор»: Present Perfect (since, ever, yet, so far, This is the first time…).\nПрямо сейчас или временно: Present Continuous (now, Shh!, these days). Договорённости на будущее тоже: We're meeting tomorrow.\nГлаголы состояния (know, want, like, hear) не ставим в Continuous: I know, а не I'm knowing.\nhas gone — ушёл и не вернулся; has been — был и вернулся.",
+    talk:["Have you ever been in a scary or strange place? When was it? What happened?","Have you ever met a famous person? Where did you meet?","What are you planning for this weekend? (We're going…)"]
+  },
+  {
+    id:"witch", monster:"witch", name:"Hazel", place:"Хижина в лесу",
+    type:"build", title:"Собери предложение",
+    intro:"My potion is boiling right now, and the spell needs perfect sentences. Put the words in the right order before it explodes!",
+    task:"Нажимайте на слова по порядку, чтобы собрать предложение. Слово с большой буквы стоит первым.",
+    items:[
+      "The witch / has lived / in the forest / for / two hundred years.",
+      "Have / you / ever / tasted / a magic potion?",
+      "I / haven't finished / my spell / yet.",
+      "Why / are / you / wearing / that ugly hat?",
+      "Last Halloween / we / didn't see / a single ghost.",
+      "How long / have / you / known / the vampire?",
+      "She / has just / turned / the prince / into a frog.",
+      "Right now / the cauldron / is boiling / over / the fire.",
+      "When / did / the zombies / wake up?",
+      "We / have been / friends / since / we were children."
+    ],
+    rule:"Present Perfect: подлежащее + have/has + 3-я форма. just, already, never стоят между ними: has just turned.\nВопрос: Have/Has + подлежащее + (ever) + 3-я форма?\nPast Simple: вопрос Did + подлежащее + 1-я форма? Отрицание: didn't + 1-я форма.\nPresent Continuous: am/is/are + -ing. Вопрос: Are you …ing?",
+    talk:["Have you ever tried a strange food? When did you try it? Did you like it?","What are you learning at the moment besides English?","Make your own magic sentence for Hazel with since or for."]
+  },
+  {
+    id:"werewolf", monster:"werewolf", name:"Wolfgang", place:"Поляна под луной",
+    type:"fix", title:"Найди ошибку",
+    intro:"Grr! Someone has written my diary with mistakes. Find the wrong words and fix them before the full moon rises.",
+    task:"Нажмите на неверную часть предложения, затем выберите исправление.",
+    items:[
+      ["I [have seen] Wolfgang yesterday.","saw",["had saw","was see"],"yesterday: Past Simple."],
+      ["Wolfgang [lives] in this forest since 2010.","has lived",["is living","lived"],"since 2010, и до сих пор: Present Perfect."],
+      ["Look! The moon [rises] over the hills.","is rising",["rose","rising"],"Look! — действие прямо сейчас."],
+      ["How long [do you know] Wolfgang?","have you known",["are you knowing","did you know"],"How long…? до сих пор: Present Perfect."],
+      ["She [has gone] to the Monster Ball last Saturday.","went",["has been","goes"],"last Saturday: Past Simple."],
+      ["I [am wanting] a new collar for my birthday.","want",["wants","am want"],"want — глагол состояния, без -ing."],
+      ["We [didn't finish] the full-moon map yet.","haven't finished",["don't finish","aren't finish"],"yet: Present Perfect."],
+      ["We have waited here [since] two hours.","for",["from","during"],"two hours — период, значит for."],
+      ["I've known him [for] last Halloween.","since",["from","during"],"last Halloween — точка начала, значит since."],
+      ["The werewolf [has bitten] the postman two days ago.","bit",["has bit","is biting"],"two days ago: Past Simple."],
+      ["My brother [has never went] to a haunted house.","has never been",["never has gone","is never going"],"has + 3-я форма: been."],
+      ["At the moment Wolfgang [eats] his dinner, so don't disturb him.","is eating",["has eaten","ate"],"At the moment: Present Continuous."]
+    ],
+    rule:"Частые ошибки:\n✗ I have seen him yesterday → ✓ I saw him yesterday.\n✗ I live here since 2010 → ✓ I have lived here since 2010.\n✗ I am wanting → ✓ I want.\n✗ for Monday → ✓ since Monday; ✗ since two hours → ✓ for two hours.\n✗ didn't finish yet → ✓ haven't finished yet.",
+    talk:["What has changed in your town recently?","Tell us about a time you lost something. Have you found it yet?","What mistakes do you often make in English?"]
+  },
+  {
+    id:"skeleton", monster:"skeleton", name:"Bones", place:"Шкаф в прихожей",
+    type:"type", title:"Впиши глагол",
+    intro:"Hello! I have lost some verb forms. Can you type them back into my sentences? Spelling matters, my bones are fragile.",
+    task:"Впишите глагол из скобок в нужной форме и нажмите «Проверить».",
+    items:[
+      "Look! Bones {is dancing|'s dancing} (dance) on the roof.",
+      "Bones {has lived|'s lived} (live) in this cupboard for fifty years.",
+      "He {lost} (lose) his left arm in 1974.",
+      "{Have you ever met} (you / ever / meet) a friendly skeleton?",
+      "I {haven't seen} (not / see) my skull since Tuesday!",
+      "Shh! The children {are sleeping} (sleep).",
+      "We {bought} (buy) these bones at the market last week.",
+      "She {has already eaten|'s already eaten} (already / eat) all the sweets.",
+      "How long {have you had} (you / have) that coffin?",
+      "Two hours ago the skeleton {fell} (fall) down the stairs.",
+      "{Did you hear} (you / hear) that noise last night?",
+      "My cat {has never seen|'s never seen} (never / see) a skeleton before.",
+      "Why {are you laughing} (you / laugh)? It isn't funny!",
+      "It's the first time I {have tried} (try) bone soup."
+    ],
+    rule:"Неправильные глаголы: lose–lost–lost, buy–bought–bought, eat–ate–eaten, fall–fell–fallen, see–saw–seen, hear–heard–heard, have–had–had.\nPresent Perfect: have/has + 3-я форма. Past Simple: 2-я форма. Present Continuous: am/is/are + -ing.\nСокращения тоже принимаются: haven't, 've, 're.",
+    talk:["What have you already done today? What haven't you done yet?","What did you buy last week?","What are your friends or family doing right now, do you think?"]
+  },
+  {
+    id:"mummy", monster:"mummy", name:"Nefer", place:"Городской музей",
+    type:"text", title:"Письмо мумии",
+    intro:"I have written a letter to my cousin, but some words are wrapped in bandages. Choose the right forms, please.",
+    task:"Выберите верную форму в каждом пропуске и нажмите «Проверить письмо».",
+    text:"Dear Cousin Ramses,\nGreetings from the City Museum! I {have lived|lived|am living} here since 1922, and I {have never left|never leave|am never leaving} this glass box. Well, almost never. Last Halloween I {escaped|have escaped|am escaping} for one night and {visited|have visited|am visiting} a cinema. The film was about mummies. Terrible!\nRight now it {is raining|rained|has rained} outside and the guard {is snoring|snored|has snored} in his chair. I {have just finished|am just finish|have just finish} my evening bandage check.\nA famous scientist {arrived|has arrived|is arriving} last Monday, and since then she {has taken|took|is taking} more than 300 photos of me. {Have you ever had|Have you ever have|Are you ever having} your photo taken? It's exhausting!\nI {haven't decided|haven't decide|am not decide} yet what to wear for the Monster Ball. Maybe my old bandages: I {have had|had|am having} them for three thousand years!\nWrite soon,\nNefer",
+    rule:"Читайте весь текст, маркеры подскажут форму.\nsince 1922, never, yet, since then, for three thousand years: Present Perfect.\nLast Halloween, last Monday: Past Simple.\nRight now: Present Continuous.",
+    talk:["Write a short reply from Ramses to Nefer: one sentence in each tense.","Have you ever been to a museum? What did you see there?","What is the weather doing right now where you are?"]
+  },
+  {
+    id:"boss", monster:"frank", name:"Frank", place:"Башня-лаборатория",
+    type:"boss", title:"Финальный бой", seconds:15,
+    intro:"So you have visited all my neighbours? Now face me! Answer fast: you have {sec} seconds for each question.",
+    task:"Смешанный раунд на время. Каждый верный ответ отнимает у Фрэнка силы.",
+    items:[
+      ["I ___ my homework, so can I go out now?",["have finished","am finishing","finish"]],
+      ["She ___ to Paris three times, and she wants to go again.",["has been","has gone","is being"]],
+      ["Listen! Someone ___ at the door.",["is knocking","knocks","knocking"]],
+      ["We ___ each other since school.",["have known","know","are knowing"]],
+      ["They ___ this castle in 1462.",["built","have built","are building"]],
+      ["___ her keys yet?",["Has she found","Did she found","Is she find"]],
+      ["I ___ to the dentist last month.",["went","have gone","am going"]],
+      ["Where's Frank? We ___ him for an hour!",["haven't seen","didn't see","aren't seeing"]],
+      ["My grandma ___ a computer before.",["has never used","never uses","is never using"]],
+      ["Why ___ a coat right now? It's so hot!",["are you wearing","have you worn","did you wear"]],
+      ["When ___ the news?",["did you hear","have you heard","are you hearing"]],
+      ["It ___ since Monday.",["hasn't rained","didn't rain","isn't raining"]],
+      ["I ___ this book three times, and I still love it.",["have read","am reading","have readen"]],
+      ["Look at the sky! It ___ dark.",["is getting","gets","getting"]],
+      ["The last bus ___ ten minutes ago.",["left","has left","is leaving"]]
+    ],
+    rule:"Ищите маркеры и смотрите на смысл: действие закончилось в прошлом, это опыт или результат к настоящему, или оно идёт прямо сейчас?",
+    talk:["Interview a monster: ask your partner five questions with How long…? Have you ever…? When did you…? What are you doing…?","Which house was the hardest for you? Why?"]
+  }
+];
+const SALT = "monster-journal-b1-2026";
+/* ===================== конец содержания ===================== */
+
+const DOODLE = {
+  vampire:'<path class="s r" d="M18 114 L34 68 L60 96 L86 68 L102 114 Z"/><ellipse class="s w" cx="60" cy="58" rx="27" ry="33"/><path class="s i" d="M33 52 C33 30 46 22 60 22 C74 22 87 30 87 52 C76 44 68 42 60 56 C52 42 44 44 33 52 Z"/><circle class="i" cx="50" cy="62" r="3.5"/><circle class="i" cx="70" cy="62" r="3.5"/><path class="s n" d="M47 76 Q60 84 73 76"/><path class="s w t" d="M52 78 L54.5 86 L57 79.5"/><path class="s w t" d="M63 79.5 L65.5 86 L68 78"/>',
+  zombie:'<path class="s g" d="M30 40 Q30 22 60 22 Q90 22 90 40 L92 84 Q92 102 60 102 Q28 102 28 84 Z"/><path class="s n" d="M36 42 L84 37"/><path class="s n t" d="M44 35 l1.5 9 M56 34 l1 9 M68 33 l1 9 M79 33 l0 8"/><path class="s n" d="M41 56 l11 11 M52 56 l-11 11"/><circle class="s w" cx="74" cy="61" r="7"/><circle class="i" cx="75" cy="62" r="2.8"/><path class="s n" d="M43 86 L52 81 L60 86 L68 80 L78 84"/>',
+  ghost:'<path class="s w" d="M28 104 L28 54 C28 30 44 18 60 18 C76 18 92 30 92 54 L92 104 L82 96 L72 104 L62 96 L52 104 L42 96 Z"/><ellipse class="i" cx="49" cy="54" rx="5" ry="8"/><ellipse class="i" cx="71" cy="54" rx="5" ry="8"/><ellipse class="s i" cx="60" cy="77" rx="6" ry="8"/><ellipse class="h" cx="39" cy="68" rx="6" ry="3"/><ellipse class="h" cx="81" cy="68" rx="6" ry="3"/>',
+  witch:'<circle class="s g" cx="60" cy="74" r="26"/><path class="s i" d="M38 54 L57 8 Q63 3 66 11 L82 52 Z"/><path class="s p t" d="M39 47 Q60 41 81 46 L83 52 Q60 47 38 53 Z"/><path class="s i" d="M16 56 Q60 42 104 56 Q60 64 16 56 Z"/><circle class="i" cx="50" cy="71" r="3.5"/><circle class="i" cx="70" cy="71" r="3.5"/><path class="s g" d="M60 73 L67 86 L58 84"/><path class="s n" d="M47 91 Q60 97 73 91"/>',
+  werewolf:'<path class="s f" d="M30 46 L26 14 L46 32 Q60 26 74 32 L94 14 L90 46 Q98 60 90 76 L72 100 L48 100 L30 76 Q22 60 30 46 Z"/><path class="p" d="M31 22 L42 34 L34 38 Z M89 22 L78 34 L86 38 Z"/><circle class="s h" cx="46" cy="54" r="6.5"/><circle class="s h" cx="74" cy="54" r="6.5"/><circle class="i" cx="46" cy="55" r="2.5"/><circle class="i" cx="74" cy="55" r="2.5"/><path class="s w" d="M45 72 Q60 62 75 72 L70 90 Q60 96 50 90 Z"/><ellipse class="i" cx="60" cy="72" rx="6" ry="4"/><path class="s w t" d="M53 87 l2 6 l2 -5 M63 88 l2 5 l2 -6"/>',
+  skeleton:'<path class="s w" d="M30 56 C30 30 44 18 60 18 C76 18 90 30 90 56 C90 70 84 76 80 78 L80 94 L40 94 L40 78 C36 76 30 70 30 56 Z"/><ellipse class="i" cx="47" cy="56" rx="8.5" ry="9.5"/><ellipse class="i" cx="73" cy="56" rx="8.5" ry="9.5"/><circle class="w" cx="49" cy="54" r="2"/><path class="i" d="M60 66 L55 77 L65 77 Z"/><path class="s n t" d="M40 85 L80 85 M48 80 L48 94 M56 80 L56 94 M64 80 L64 94 M72 80 L72 94"/>',
+  mummy:'<rect class="s w" x="30" y="18" width="60" height="84" rx="28"/><path class="s n t" d="M32 38 L88 28 M30 52 L90 44 M30 82 L90 72 M36 96 L84 88"/><path class="s n t" d="M38 64 L56 62"/><circle class="s h" cx="71" cy="62" r="7"/><circle class="i" cx="72" cy="63" r="2.8"/><path class="s w t" d="M88 76 Q104 84 98 104"/>',
+  frank:'<rect class="s p" x="16" y="68" width="14" height="9"/><rect class="s p" x="90" y="68" width="14" height="9"/><path class="s g" d="M32 30 L88 30 L90 96 Q60 106 30 96 Z"/><path class="s i" d="M30 18 L90 18 L90 40 L81 33 L73 42 L65 33 L57 42 L49 33 L41 42 L30 34 Z"/><path class="s n" d="M41 55 h14 M65 55 h14"/><circle class="i" cx="48" cy="62" r="3.2"/><circle class="i" cx="72" cy="62" r="3.2"/><path class="s n t" d="M70 72 L84 78 M74 70 l-2 6 M79 72 l-2 6"/><path class="s n" d="M45 86 H75"/><path class="s n t" d="M51 82 v8 M60 82 v8 M69 82 v8"/>'
+};
+const svg=(k,label)=>`<svg viewBox="0 0 120 120" role="img" aria-label="${label||""}">${DOODLE[k]}</svg>`;
+
+const $=id=>document.getElementById(id);
+const view=$("view");
+const KEY="monster-journal-b1-v1";
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const plural=(n,f)=>{const m10=n%10,m100=n%100;return f[(m10===1&&m100!==11)?0:(m10>=2&&m10<=4&&(m100<10||m100>=20))?1:2]};
+const PRAISE=["Верно!","Точно!","Отлично!","Да!","Так держать!"];
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{rooms:{},name:""}}catch(e){return{rooms:{},name:""}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(progress))}catch(e){}}
+let progress=load();
+if(!progress.rooms)progress.rooms={};
+
+const gapsOf=text=>text.split(/\{([^}]+)\}/).filter((_,i)=>i%2).map(g=>g.split("|"));
+const roomTotal=r=>r.type==="text"?gapsOf(r.text).length:r.items.length;
+const GRAND=ROOMS.reduce((s,r)=>s+roomTotal(r),0);
+
+/* ---------- озвучка ---------- */
+let enVoice=null;
+function pickVoice(){if(!("speechSynthesis" in window))return;const v=speechSynthesis.getVoices();enVoice=v.find(x=>x.lang==="en-US")||v.find(x=>/^en/.test(x.lang))||null}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(t){
+  if(!$("sound").checked||!("speechSynthesis" in window)||!t)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t.replace(/___/g,"blank"));
+  u.lang="en-US";u.rate=.95;if(enVoice)u.voice=enVoice;
+  speechSynthesis.speak(u);
+}
+$("sound").onchange=()=>{if(!$("sound").checked&&"speechSynthesis" in window)speechSynthesis.cancel()};
+
+/* ---------- счётчики ---------- */
+function stats(){
+  let c=0,done=0;
+  ROOMS.forEach(r=>{const st=progress.rooms[r.id];if(st){c+=st.correct;done++}});
+  return{c,done};
+}
+function hud(){
+  const{c}=stats();
+  $("totalStat").textContent=`Верно: ${c} из ${GRAND}`;
+  $("bar").style.width=(c/GRAND*100)+"%";
+}
+
+/* ---------- карта ---------- */
+let run=null,timer=null;
+function clearTimer(){if(timer){clearInterval(timer);timer=null}}
+
+function renderMap(){
+  clearTimer();run=null;
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  const{done}=stats();
+  view.innerHTML=`
+    <p class="intro">Ночь на улице монстров. В каждом доме живёт монстр со своей грамматической задачей: всего ${ROOMS.length} ${plural(ROOMS.length,["дом","дома","домов"])} и ${GRAND} ${plural(GRAND,["задание","задания","заданий"])}. Идите по порядку: в последнем доме ждёт бой на время. После каждого дома есть вопросы для разговора.${done?` Пройдено: ${done} из ${ROOMS.length}.`:""}</p>
+    <div class="map">${ROOMS.map((r,i)=>{
+      const st=progress.rooms[r.id],n=roomTotal(r);
+      const unit=r.type==="text"?["пропуск","пропуска","пропусков"]:["задание","задания","заданий"];
+      return `<button class="house${st?" done":""}${r.type==="boss"?" boss":""}" data-room="${i}">
+        <span class="hno">Дом ${i+1}</span>${svg(r.monster)}
+        <span class="hname">${esc(r.name)}</span><span class="hplace">${esc(r.place)}</span>
+        <span class="htask">${esc(r.title)}</span>
+        <span class="hstat">${st?`${st.correct} из ${st.total}`:`${n} ${plural(n,unit)}`}</span></button>`}).join("")}</div>
+    <div class="row" style="margin-top:26px">
+      <button id="finishBtn">Получить результат для учителя</button>
+      <button id="resetAll">Сбросить весь прогресс</button>
+    </div>`;
+  view.querySelectorAll(".house").forEach(b=>b.onclick=()=>startRoom(+b.dataset.room));
+  $("finishBtn").onclick=showResult;
+  $("resetAll").onclick=()=>{
+    if(!confirm("Стереть все результаты и начать игру сначала?"))return;
+    progress={rooms:{},name:""};save();$("studentName").value="";
+    $("result").classList.remove("show");hud();renderMap();
+  };
+  hud();
+}
+
+/* ---------- комната ---------- */
+function startRoom(idx){
+  const r=ROOMS[idx];
+  $("result").classList.remove("show");
+  run={idx,r,n:roomTotal(r),i:0,correct:0,wrong:[],answered:false,started:r.type!=="boss",
+       order:r.type==="text"?null:shuffle(r.items.map((_,k)=>k))};
+  const keys={sort:"Клавиши: "+(r.bins||[]).map(b=>b.hot.toUpperCase()).join(" / "),choose:"Клавиши 1, 2, 3.",boss:"Клавиши 1, 2, 3.",
+    build:"Backspace убирает последнее слово, Enter проверяет.",fix:"Потом клавиши 1, 2, 3.",type:"Enter проверяет.",text:""}[r.type];
+  const intro=r.intro.replace("{sec}",r.seconds||"");
+  view.innerHTML=`
+  <div class="room">
+    <div class="roomtop"><button id="back">← К карте</button><span class="counter" id="counter"></span></div>
+    <div class="monster">
+      <div class="mon" id="mon">${svg(r.monster,r.name)}</div>
+      <div class="bubble"><span class="mname">${esc(r.name)}</span><p lang="en">${esc(intro)}</p>
+        <button class="say" id="sayIntro" aria-label="Послушать">🔊</button></div>
+    </div>
+    <h2 class="rtitle">${esc(r.title)}</h2>
+    <p class="task">${esc(r.task)} <span class="keys">${keys}</span></p>
+    <details class="rule"><summary>Шпаргалка</summary><div>${esc(r.rule)}</div></details>
+    <div class="mini"><i id="mini"></i></div>
+    <div id="stage" class="stage" tabindex="-1"></div>
+    <div id="fb" class="fb" aria-live="polite"></div>
+    <div class="row"><button id="nextBtn" class="next" hidden>Дальше</button></div>
+  </div>`;
+  $("back").onclick=renderMap;
+  $("sayIntro").onclick=()=>speak(intro);
+  $("nextBtn").onclick=next;
+  window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});
+  renderItem();
+}
+
+function renderItem(){
+  const r=run.r;
+  run.answered=false;
+  $("fb").innerHTML="";$("nextBtn").hidden=true;
+  $("nextBtn").textContent=(r.type==="text"||run.i===run.n-1)?"Завершить дом":"Дальше";
+  $("counter").textContent=r.type==="text"?`${run.n} ${plural(run.n,["пропуск","пропуска","пропусков"])}`:`Задание ${run.i+1} из ${run.n}`;
+  $("mini").style.width=(run.i/run.n*100)+"%";
+  const item=r.type==="text"?null:r.items[run.order[run.i]];
+  ({sort:renderSort,choose:renderChoose,boss:renderBoss,build:renderBuild,fix:renderFix,type:renderType,text:renderText})[r.type](item);
+  if(r.type!=="type")$("stage").focus({preventScroll:true});
+}
+
+function mark(ok,label,explain,sayText){
+  run.answered=true;clearTimer();
+  if(ok)run.correct++;else run.wrong.push(label);
+  $("fb").innerHTML=`<span class="${ok?"ok":"bad"}">${ok?PRAISE[Math.floor(Math.random()*PRAISE.length)]:"Не совсем."}</span> ${explain}`;
+  const m=$("mon");m.classList.remove("happy","shake");void m.offsetWidth;m.classList.add(ok?"happy":"shake");
+  speak(sayText);
+  const nb=$("nextBtn");nb.hidden=false;nb.focus({preventScroll:true});
+}
+function next(){run.i++;if(run.i>=run.n)finishRoom();else renderItem()}
+const disableAll=sel=>$("stage").querySelectorAll(sel).forEach(b=>b.disabled=true);
+
+/* sort */
+function renderSort(item){
+  const r=run.r,[text,binId]=item;
+  $("stage").innerHTML=`<div class="chip" lang="en"><span>${esc(text)}</span></div>
+    <div class="bins bins${r.bins.length}">${r.bins.map(b=>`<button class="bin" data-bin="${b.id}" data-hot="${b.hot}"><span class="blabel" lang="en">${esc(b.label)}</span>${b.hint?`<span class="bhint">${esc(b.hint)}</span>`:""}<kbd>${b.hot.toUpperCase()}</kbd></button>`).join("")}</div>`;
+  $("stage").querySelectorAll(".bin").forEach(btn=>btn.onclick=()=>{
+    if(run.answered)return;
+    const ok=btn.dataset.bin===binId,right=r.bins.find(b=>b.id===binId);
+    disableAll(".bin");
+    btn.classList.add(ok?"right":"wrong");
+    $("stage").querySelector(`[data-bin="${binId}"]`).classList.add("right");
+    const phrase=r.speakWithBin?`${right.label} ${text}`:`${text} → ${right.label}`;
+    mark(ok,phrase,`<b lang="en">${esc(phrase)}</b>`,r.speakWithBin?phrase:text);
+  });
+}
+
+/* choose + boss */
+function choiceUI(item){
+  const[sent,opts]=item;
+  const arr=shuffle(opts.map((o,k)=>({o,ok:k===0})));
+  $("stage").insertAdjacentHTML("beforeend",`<p class="sentence" lang="en">${esc(sent).replace("___",'<span class="gap" id="gap">&nbsp;</span>')}</p>
+    <div class="opts">${arr.map((a,k)=>`<button class="opt" data-k="${k}" data-key="${k+1}"><kbd>${k+1}</kbd><span lang="en">${esc(a.o)}</span></button>`).join("")}</div>`);
+  return arr;
+}
+function resolveChoice(item,arr,k,prefix){
+  const[sent,opts,note]=item,full=sent.replace("___",opts[0]);
+  disableAll(".opt");
+  const btns=$("stage").querySelectorAll(".opt");
+  arr.forEach((a,j)=>{if(a.ok)btns[j].classList.add("right")});
+  if(k>=0&&!arr[k].ok)btns[k].classList.add("wrong");
+  const g=$("gap");g.textContent=opts[0];g.classList.add("filled");
+  mark(k>=0&&arr[k].ok,full,`${prefix||""}<span lang="en">${esc(full)}</span>${note?`<br><small>${esc(note)}</small>`:""}`,full);
+}
+function renderChoose(item){
+  $("stage").innerHTML="";
+  const arr=choiceUI(item);
+  $("stage").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(!run.answered)resolveChoice(item,arr,+b.dataset.k)});
+}
+function renderBoss(item){
+  const r=run.r,sec=r.seconds||15;
+  if(!run.started){
+    $("stage").innerHTML=`<div class="bossstart"><p>${run.n} ${plural(run.n,["вопрос","вопроса","вопросов"])}, ${sec} ${plural(sec,["секунда","секунды","секунд"])} на каждый.</p><button id="fight" data-key="1">Начать бой</button></div>`;
+    $("fight").onclick=()=>{run.started=true;renderItem()};
+    return;
+  }
+  $("stage").innerHTML=`<div class="hp"><span>${esc(r.name)}</span><div class="hpbar"><i id="hpbar" style="width:${(run.n-run.correct)/run.n*100}%"></i></div></div><div class="timer"><i id="tbar" style="width:100%"></i></div>`;
+  const arr=choiceUI(item);
+  const done=k=>{if(run.answered)return;resolveChoice(item,arr,k,k<0?"Время вышло. ":"");$("hpbar").style.width=((run.n-run.correct)/run.n*100)+"%"};
+  $("stage").querySelectorAll(".opt").forEach(b=>b.onclick=()=>done(+b.dataset.k));
+  const end=Date.now()+sec*1000;
+  clearTimer();
+  timer=setInterval(()=>{
+    const left=end-Date.now();
+    const t=$("tbar");if(t)t.style.width=Math.max(0,left/(sec*1000)*100)+"%";
+    if(left<=0)done(-1);
+  },100);
+}
+
+/* build */
+function renderBuild(item){
+  const tiles=item.split("/").map(s=>s.trim()).filter(Boolean);
+  let pool=shuffle(tiles.map((_,k)=>k));
+  if(tiles.length>1)while(pool.every((v,k)=>v===k))pool=shuffle(pool);
+  let placed=[];
+  $("stage").innerHTML=`<div class="line" id="line" lang="en" aria-label="Ваше предложение"></div><div class="pool" id="pool" lang="en"></div>
+    <div class="row"><button id="check">Проверить</button><button id="clear">Очистить</button></div>`;
+  const draw=()=>{
+    $("line").innerHTML=placed.map(k=>`<button class="tile" data-k="${k}">${esc(tiles[k])}</button>`).join("");
+    $("pool").innerHTML=pool.map(k=>`<button class="tile" data-k="${k}">${esc(tiles[k])}</button>`).join("");
+    $("line").querySelectorAll(".tile").forEach(b=>b.onclick=()=>{if(run.answered)return;const k=+b.dataset.k;placed=placed.filter(x=>x!==k);pool.push(k);draw()});
+    $("pool").querySelectorAll(".tile").forEach(b=>b.onclick=()=>{if(run.answered)return;const k=+b.dataset.k;pool=pool.filter(x=>x!==k);placed.push(k);draw();const f=$("pool").querySelector(".tile");if(f)f.focus();else $("check").focus()});
+  };
+  run.removeLast=()=>{if(!placed.length)return;pool.push(placed.pop());draw()};
+  draw();
+  $("clear").onclick=()=>{if(run.answered)return;pool=pool.concat(placed);placed=[];draw()};
+  $("check").onclick=()=>{
+    if(run.answered)return;
+    if(placed.length<tiles.length){$("fb").innerHTML=`<span class="bad">Используйте все слова.</span> Осталось: ${pool.length}.`;return}
+    const target=tiles.join(" "),ok=placed.map(k=>tiles[k]).join(" ")===target;
+    disableAll(".tile");$("check").disabled=true;$("clear").disabled=true;
+    $("line").querySelectorAll(".tile").forEach(t=>t.classList.add(ok?"right":"wrong"));
+    mark(ok,target,ok?`<span lang="en">${esc(target)}</span>`:`Правильно: <span lang="en">${esc(target)}</span>`,target);
+  };
+}
+
+/* fix */
+function renderFix(item){
+  const[sent,fix,distr,note]=item;
+  const m=sent.match(/\[([^\]]+)\]/);
+  const before=sent.slice(0,m.index),after=sent.slice(m.index+m[0].length);
+  const toks=[...before.trim().split(/\s+/).filter(Boolean).map(t=>({t})),{t:m[1],bad:true},...after.trim().split(/\s+/).filter(Boolean).map(t=>({t}))];
+  const fixed=(before+fix+after).replace(/\s+/g," ").trim();
+  $("stage").innerHTML=`<p class="sentence fixs" lang="en">${toks.map((tk,k)=>`<button class="tok" data-k="${k}">${esc(tk.t)}</button>`).join(" ")}</p><div id="fixopts"></div>`;
+  const badBtn=()=>$("stage").querySelector(`.tok[data-k="${toks.findIndex(t=>t.bad)}"]`);
+  $("stage").querySelectorAll(".tok").forEach(b=>b.onclick=()=>{
+    if(run.answered||run.found)return;
+    const tk=toks[+b.dataset.k];
+    disableAll(".tok");
+    badBtn().classList.add("found");
+    if(!tk.bad){
+      b.classList.add("miss");
+      mark(false,fixed,`Ошибка была в «<span lang="en">${esc(m[1])}</span>». Правильно: <span lang="en">${esc(fixed)}</span>${note?`<br><small>${esc(note)}</small>`:""}`,fixed);
+      return;
+    }
+    run.found=true;
+    const arr=shuffle([{o:fix,ok:true},...distr.map(o=>({o,ok:false}))]);
+    $("fixopts").innerHTML=`<p>Нашли! Чем заменить?</p><div class="opts">${arr.map((a,k)=>`<button class="opt" data-k="${k}" data-key="${k+1}"><kbd>${k+1}</kbd><span lang="en">${esc(a.o)}</span></button>`).join("")}</div>`;
+    const btns=$("fixopts").querySelectorAll(".opt");
+    btns.forEach(o=>o.onclick=()=>{
+      if(run.answered)return;
+      const k=+o.dataset.k,ok=arr[k].ok;
+      btns.forEach(x=>x.disabled=true);
+      arr.forEach((a,j)=>{if(a.ok)btns[j].classList.add("right")});
+      if(!ok)o.classList.add("wrong");
+      run.found=false;
+      mark(ok,fixed,`<span lang="en">${esc(fixed)}</span>${note?`<br><small>${esc(note)}</small>`:""}`,fixed);
+    });
+    btns[0].focus();
+  });
+  run.found=false;
+}
+
+/* type */
+function norm(t){
+  return t.toLowerCase().replace(/[’‘`´]/g,"'").replace(/n't\b/g," not").replace(/'ve\b/g," have")
+    .replace(/'re\b/g," are").replace(/'m\b/g," am").replace(/[.!?,]+$/,"").replace(/\s+/g," ").trim();
+}
+function renderType(item){
+  const m=item.match(/\{([^}]+)\}\s*(\([^)]*\))?/);
+  const answers=m[1].split("|"),hint=m[2]||"";
+  const before=item.slice(0,m.index),after=item.slice(m.index+m[0].length);
+  const full=(before+answers[0]+(/^[\s.,!?]/.test(after)||!after?"":" ")+after).replace(/\s+/g," ").trim();
+  const size=Math.max(8,answers[0].length+3);
+  $("stage").innerHTML=`<p class="sentence" lang="en">${esc(before)}<input id="ans" class="tin" size="${size}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Ваш ответ ${esc(hint)}"> <span class="hint">${esc(hint)}</span> ${esc(after)}</p>
+    <div class="row"><button id="check">Проверить</button></div>`;
+  const inp=$("ans");
+  inp.focus({preventScroll:true});
+  const check=()=>{
+    if(run.answered)return;
+    const v=norm(inp.value);
+    if(!v){$("fb").innerHTML='<span class="bad">Впишите ответ.</span>';inp.focus();return}
+    const ok=answers.some(a=>norm(a)===v);
+    inp.readOnly=true;inp.classList.add(ok?"right":"wrong");$("check").disabled=true;
+    mark(ok,full,ok?`<span lang="en">${esc(full)}</span>`:`Правильно: <b lang="en">${esc(answers[0])}</b>. <span lang="en">${esc(full)}</span>`,full);
+  };
+  $("check").onclick=check;
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(run.answered)next();else check()}});
+}
+
+/* text */
+function renderText(){
+  const r=run.r,parts=r.text.split(/\{([^}]+)\}/);
+  let g=0;const gaps=[];
+  const html=parts.map((p,k)=>{
+    if(k%2===0)return esc(p).replace(/\n/g,"<br>");
+    const opts=p.split("|");gaps.push({opts,ctx:parts[k-1].replace(/\s+/g," ").slice(-30)});
+    return `<select class="sel" data-g="${g}" aria-label="Пропуск ${++g}"><option value="">…</option>${shuffle(opts).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select>`;
+  }).join("");
+  $("stage").innerHTML=`<div class="letter" lang="en">${html}</div><div class="row"><button id="check">Проверить письмо</button><button id="readLetter" hidden>🔊 Послушать письмо</button></div>`;
+  const filled=parts.map((p,k)=>k%2?p.split("|")[0]:p).join("").replace(/\n/g," ");
+  $("readLetter").onclick=()=>speak(filled);
+  $("check").onclick=()=>{
+    if(run.answered)return;
+    const sels=[...$("stage").querySelectorAll(".sel")];
+    const empty=sels.filter(s=>!s.value).length;
+    if(empty){$("fb").innerHTML=`<span class="bad">Заполните все пропуски.</span> Осталось: ${empty}.`;sels.find(s=>!s.value).focus();return}
+    let c=0;const wrong=[];
+    sels.forEach((s,k)=>{
+      const right=gaps[k].opts[0],ok=s.value===right;
+      s.disabled=true;s.classList.add(ok?"right":"wrong");
+      if(ok)c++;else{wrong.push(`…${gaps[k].ctx.trim()} [${right}]`);s.insertAdjacentHTML("afterend",`<span class="corr">${esc(right)}</span>`)}
+    });
+    run.correct=c;run.wrong=wrong;run.answered=true;run.i=run.n-1;
+    $("check").disabled=true;$("readLetter").hidden=false;
+    $("fb").innerHTML=`<span class="${c===run.n?"ok":"bad"}">Верно ${c} из ${run.n}.</span> ${c<run.n?"Зелёным показаны правильные формы.":""}`;
+    const m=$("mon");m.classList.remove("happy","shake");void m.offsetWidth;m.classList.add(c/run.n>=.7?"happy":"shake");
+    const nb=$("nextBtn");nb.hidden=false;nb.focus({preventScroll:true});
+  };
+}
+
+/* итог дома */
+function finishRoom(){
+  clearTimer();
+  const r=run.r,c=run.correct,n=run.n,pct=c/n;
+  progress.rooms[r.id]={correct:c,total:n,wrong:run.wrong};save();hud();
+  const say=pct>=.9?"You are a true monster expert!":pct>=.7?"Not bad for a human!":"Hmm. Read my cheat sheet and try again!";
+  $("counter").textContent="Дом пройден";$("mini").style.width="100%";
+  $("fb").innerHTML="";$("nextBtn").hidden=true;
+  const nextIdx=run.idx+1<ROOMS.length?run.idx+1:null;
+  $("stage").innerHTML=`<div class="summary">
+    <div class="big">${c} из ${n}</div>
+    <p lang="en"><b>${esc(r.name)}:</b> ${say}</p>
+    ${run.wrong.length?`<div>Ошибки:</div><ul lang="en">${run.wrong.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:"<p>Без единой ошибки!</p>"}
+    <div class="talk"><h3>Поговорите</h3><p>Обсудите вопросы с учителем или партнёром. Отвечайте полными предложениями.</p>
+      <ol lang="en">${r.talk.map(t=>`<li>${esc(t)} <button class="say" data-say="${esc(t)}" aria-label="Послушать">🔊</button></li>`).join("")}</ol></div>
+    <div class="row"><button id="toMap">К карте</button><button id="again">Пройти дом заново</button>${nextIdx!==null?`<button id="nextRoom" class="next">Следующий дом</button>`:`<button id="toResult" class="next">Получить результат</button>`}</div>
+  </div>`;
+  const mon=$("mon");mon.classList.remove("happy","shake");void mon.offsetWidth;mon.classList.add(pct>=.7?"happy":"shake");
+  speak(say);
+  $("stage").querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say));
+  const idx=run.idx;
+  $("toMap").onclick=renderMap;
+  $("again").onclick=()=>startRoom(idx);
+  if(nextIdx!==null)$("nextRoom").onclick=()=>startRoom(nextIdx);
+  else $("toResult").onclick=()=>{renderMap();showResult()};
+  run.answered=true;run.summary=true;
+  $("stage").focus({preventScroll:true});
+}
+
+/* ---------- клавиатура ---------- */
+document.addEventListener("keydown",e=>{
+  const tag=e.target.tagName;
+  if(tag==="INPUT"||tag==="SELECT"||tag==="TEXTAREA"||!run)return;
+  if(e.key==="Escape"){renderMap();return}
+  if(run.summary)return;
+  if(e.key==="Enter"){
+    if(tag==="BUTTON"||tag==="SUMMARY")return;
+    if(!$("nextBtn").hidden){e.preventDefault();next();return}
+    const c=$("check");if(c&&!run.answered){e.preventDefault();c.click()}
+    return;
+  }
+  if(e.key==="Backspace"&&run.r.type==="build"&&!run.answered&&run.removeLast){e.preventDefault();run.removeLast();return}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  const b=[...view.querySelectorAll("[data-key],[data-hot]")].find(x=>(x.dataset.key===k||x.dataset.hot===k)&&!x.disabled);
+  if(b){e.preventDefault();b.click()}
+});
+
+/* ---------- результат и код ---------- */
+function makeCode(name,c,done){
+  const str=[SALT,name.trim().toLowerCase(),c,done].join("|");
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(36).toUpperCase().padStart(7,"0").slice(-6);
+}
+function buildReport(){
+  const name=$("studentName").value.trim()||"(имя не указано)";
+  const{c,done}=stats();
+  const lines=ROOMS.map(r=>{const st=progress.rooms[r.id];return `${r.name} (${r.title}): ${st?`${st.correct}/${st.total}`:"не пройдено"}`});
+  const errs=ROOMS.filter(r=>progress.rooms[r.id]&&progress.rooms[r.id].wrong.length)
+    .map(r=>`${r.name}:\n– ${progress.rooms[r.id].wrong.join("\n– ")}`);
+  const nErr=ROOMS.reduce((s,r)=>s+(progress.rooms[r.id]?progress.rooms[r.id].wrong.length:0),0);
+  $("report").textContent=
+    `Monster Journal (B1): Present Perfect, Past Simple, Present Continuous\nИмя: ${name}\nВерно: ${c}/${GRAND}\nПройдено домов: ${done}/${ROOMS.length}\n`+
+    lines.join("\n")+
+    (nErr?`\nОшибки (${nErr}):\n${errs.join("\n")}`:(done?"\nОшибок нет":""))+
+    `\nКод: ${makeCode(name,c,done)}`;
+}
+function showResult(){
+  const{done}=stats();
+  if(done<ROOMS.length&&!confirm(`Пройдено ${done} из ${ROOMS.length} домов. Всё равно получить результат?`))return;
+  $("studentName").value=progress.name||"";
+  $("resTitle").textContent=done===ROOMS.length?"Все дома пройдены!":`Пройдено домов: ${done} из ${ROOMS.length}`;
+  buildReport();$("copied").textContent="";
+  $("result").classList.add("show");
+  $("result").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+  $("studentName").focus({preventScroll:true});
+}
+$("studentName").oninput=()=>{progress.name=$("studentName").value;save();buildReport()};
+$("copyBtn").onclick=async()=>{
+  const t=$("report").textContent,msg=$("copied");
+  try{await navigator.clipboard.writeText(t);msg.textContent="Скопировано"}
+  catch(e){
+    const rg=document.createRange();rg.selectNodeContents($("report"));
+    const s=getSelection();s.removeAllRanges();s.addRange(rg);
+    msg.textContent="Текст выделен, нажмите Ctrl+C";
+  }
+};
+
+/* режим учителя: ссылка с #teacher в конце */
+if(location.hash==="#teacher")$("teacher").classList.add("show");
+$("tCheck").onclick=()=>{
+  const v=id=>$(id).value.trim();
+  const ok=makeCode(v("tName"),v("tCorrect").split("/")[0].trim(),v("tDone").split("/")[0].trim())===v("tCode").toUpperCase();
+  $("tResult").innerHTML=ok?'<span class="ok">Код верный, результат не изменён.</span>':'<span class="bad">Код не совпадает. Проверьте, что данные введены точно как в результате.</span>';
+};
+
+renderMap();
+</script>
+</body>
+</html>
