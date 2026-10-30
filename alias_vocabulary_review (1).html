@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ALIAS: Vocabulary Review</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #1f1033 0%, #3a1850 50%, #5e1f4f 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .wrap { width: 480px; max-width: 100%; }
+  .title {
+    text-align: center;
+    color: #ffd166;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+  }
+  .subtitle { text-align: center; color: #f0d9ff; font-size: 14px; margin-bottom: 24px; opacity: 0.85; }
+
+  .panel {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: #fceeff;
+  }
+  .panel h2 { margin-top: 0; color: #ffd166; font-size: 18px; }
+  .panel ul { padding-left: 20px; line-height: 1.7; font-size: 14.5px; }
+  .start-btn, .action-btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 18px;
+  }
+  .start-btn { background: #ffd166; color: #3a1850; }
+  .start-btn:hover { background: #ffdd8a; }
+
+  .game { display: none; text-align: center; }
+  .timer {
+    font-size: 15px;
+    color: #f0d9ff;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .timer span { color: #ffd166; font-weight: 800; font-size: 20px; }
+  .score { color: #9ef0c4; font-size: 14px; margin-bottom: 18px; }
+  .card {
+    background: #fceeff;
+    color: #1f1033;
+    border-radius: 18px;
+    padding: 50px 24px;
+    font-size: 30px;
+    font-weight: 800;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.25);
+    margin-bottom: 20px;
+  }
+  .category-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .tag-idiom { background: #ffd166; color: #3a1850; }
+  .tag-colloc { background: #9ef0c4; color: #10402a; }
+  .tag-banana { background: #ff9ecf; color: #4d0033; }
+
+  .btn-row { display: flex; gap: 12px; }
+  .btn-correct { background: #9ef0c4; color: #10402a; flex: 1.3; }
+  .btn-skip { background: rgba(255,255,255,0.15); color: #fceeff; flex: 1; border: 1px solid rgba(255,255,255,0.3); }
+
+  .end-screen { display: none; text-align: center; color: #fceeff; }
+  .end-screen .final-score { font-size: 54px; font-weight: 900; color: #ffd166; margin: 10px 0 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">ALIAS</div>
+  <div class="subtitle">Vocabulary Review — Idioms, Collocations &amp; Key Words</div>
+
+  <div class="panel" id="rulesPanel">
+    <h2>Rules</h2>
+    <ul>
+      <li>One person explains the word/phrase on the card <b>without saying the word itself</b> (or any part of it) in English or Russian.</li>
+      <li>Your partner has <b>5 minutes</b> to guess as many as possible.</li>
+      <li>Tap <b>✓ Correct</b> when guessed — moves to the next card and adds a point.</li>
+      <li>Tap <b>Skip</b> if you're stuck — moves on, no point (no penalty either).</li>
+      <li>Switch roles after each 5-minute round.</li>
+    </ul>
+    <button class="start-btn" onclick="startGame()">Start Round (5 min)</button>
+  </div>
+
+  <div class="game" id="gamePanel">
+    <div class="timer">Time left: <span id="timeLeft">5:00</span></div>
+    <div class="score">Score: <span id="scoreVal">0</span></div>
+    <div id="categoryTag" class="category-tag tag-idiom">IDIOM</div>
+    <div class="card" id="cardWord">—</div>
+    <div class="btn-row">
+      <button class="action-btn btn-correct" onclick="correct()">✓ Correct</button>
+      <button class="action-btn btn-skip" onclick="skip()">Skip →</button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <div>Time's up!</div>
+    <div class="final-score" id="finalScore">0</div>
+    <div>words guessed</div>
+    <button class="start-btn" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+const words = [
+  {w: "put it in a nutshell", cat: "idiom"},
+  {w: "get straight to the point", cat: "idiom"},
+  {w: "get the wrong end of the stick", cat: "idiom"},
+  {w: "be on the same wavelength", cat: "idiom"},
+  {w: "beat about the bush", cat: "idiom"},
+  {w: "put someone in the picture", cat: "idiom"},
+  {w: "waste time", cat: "colloc"},
+  {w: "face problems", cat: "colloc"},
+  {w: "save time", cat: "colloc"},
+  {w: "share information", cat: "colloc"},
+  {w: "allocate resources", cat: "colloc"},
+  {w: "develop loyalty", cat: "colloc"},
+  {w: "clarify", cat: "banana"},
+  {w: "ramble on", cat: "banana"},
+  {w: "confused", cat: "banana"},
+  {w: "misleading", cat: "banana"},
+  {w: "interrupt a meeting", cat: "banana"},
+  {w: "be good at doing sth", cat: "banana"}
+];
+
+const tagLabels = { idiom: "IDIOM", colloc: "COLLOCATION", banana: "KEY WORD" };
+const tagClasses = { idiom: "tag-idiom", colloc: "tag-colloc", banana: "tag-banana" };
+
+let deck = [];
+let score = 0;
+let timer = null;
+let timeLeft = 300;
+
+function formatTime(t) {
+  const m = Math.floor(t / 60);
+  const s = t % 60;
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  document.getElementById('rulesPanel').style.display = 'none';
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('gamePanel').style.display = 'block';
+  deck = shuffle(words);
+  score = 0;
+  timeLeft = 60;
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('timeLeft').textContent = timeLeft;
+  showNextCard();
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timeLeft').textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function showNextCard() {
+  if (deck.length === 0) deck = shuffle(words);
+  const next = deck.pop();
+  document.getElementById('cardWord').textContent = next.w;
+  const tagEl = document.getElementById('categoryTag');
+  tagEl.textContent = tagLabels[next.cat];
+  tagEl.className = 'category-tag ' + tagClasses[next.cat];
+}
+
+function correct() {
+  score++;
+  document.getElementById('scoreVal').textContent = score;
+  showNextCard();
+}
+
+function skip() {
+  showNextCard();
+}
+
+function endGame() {
+  clearInterval(timer);
+  document.getElementById('gamePanel').style.display = 'none';
+  document.getElementById('endScreen').style.display = 'block';
+  document.getElementById('finalScore').textContent = score;
+}
+
+function resetGame() {
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('rulesPanel').style.display = 'block';
+}
+</script>
+</body>
+</html>
