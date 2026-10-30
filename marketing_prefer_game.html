@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Marketing: Prefer / Would Prefer / Would Rather</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 20% 20%, #2d3f66 0%, #16213b 45%, #0d1526 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .wrap { width: 520px; max-width: 100%; }
+  .title {
+    text-align: center;
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .subtitle { text-align: center; color: #d4af60; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 26px; }
+
+  .panel {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(212,175,96,0.35);
+    border-radius: 14px;
+    padding: 26px 28px;
+    color: #f5f0e6;
+  }
+  .panel h2 { margin-top: 0; color: #d4af60; font-size: 17px; }
+  .panel ul { padding-left: 20px; line-height: 1.7; font-size: 14.5px; }
+  .btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  .btn-gold { background: #d4af60; color: #16213b; }
+  .btn-gold:hover { background: #e3c27e; }
+  .btn-outline { background: transparent; border: 1px solid rgba(212,175,96,0.5); color: #f5f0e6; }
+
+  .game { display: none; text-align: center; }
+
+  .wheel-stage { display: block; }
+  .structure-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border-radius: 24px;
+    background: #d4af60;
+    color: #16213b;
+    margin-bottom: 18px;
+  }
+  .structure-pattern {
+    font-size: 14px;
+    color: #c9b48a;
+    font-style: italic;
+    margin-bottom: 24px;
+  }
+  .dilemma-card {
+    background: rgba(13,21,38,0.4);
+    border: 1px solid rgba(212,175,96,0.3);
+    border-radius: 14px;
+    padding: 30px 26px;
+    margin-bottom: 20px;
+  }
+  .option {
+    font-family: Georgia, serif;
+    font-size: 19px;
+    color: #f5f0e6;
+    line-height: 1.5;
+  }
+  .vs-divider { color: #d4af60; font-style: italic; margin: 14px 0; font-size: 15px; }
+
+  .reveal-box {
+    display: none;
+    background: rgba(212,175,96,0.1);
+    border: 1px dashed rgba(212,175,96,0.5);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: #f5f0e6;
+    text-align: left;
+  }
+  .reveal-box b { color: #d4af60; }
+
+  .btn-row { display: flex; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">Marketing Dilemmas</div>
+  <div class="subtitle">Prefer &middot; Would Prefer &middot; Would Rather</div>
+
+  <div class="panel" id="rulesPanel">
+    <h2>How to play</h2>
+    <ul>
+      <li>Tap <b>Spin</b> — it randomly picks ONE of 6 structures: prefer+noun, prefer+gerund, prefer+infinitive, would prefer+infinitive, would prefer+gerund (разговорно), or would rather+base verb.</li>
+      <li>A marketing dilemma (two options) appears.</li>
+      <li>Answer out loud using exactly the structure shown — not the one you'd naturally pick.</li>
+      <li>Tap <b>Show model answer</b> to check yourself, then <b>Next dilemma</b>.</li>
+    </ul>
+    <button class="btn btn-gold" onclick="startGame()">Start</button>
+  </div>
+
+  <div class="game" id="gamePanel">
+    <div class="structure-badge" id="structureBadge">PREFER</div>
+    <div class="structure-pattern" id="structurePattern">prefer + gerund + to + gerund</div>
+
+    <div class="dilemma-card">
+      <div class="option" id="optionA">Option A</div>
+      <div class="vs-divider">or</div>
+      <div class="option" id="optionB">Option B</div>
+    </div>
+
+    <div class="reveal-box" id="revealBox">
+      <b>Model answer:</b> <span id="modelAnswer"></span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" id="showBtn" onclick="showModel()">Show model answer</button>
+      <button class="btn btn-gold" onclick="nextRound()">Next dilemma →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const structures = [
+  {name: "PREFER + NOUN", pattern: "prefer + noun + to + noun", key: "noun"},
+  {name: "PREFER + GERUND", pattern: "prefer + gerund + to + gerund", key: "gerund"},
+  {name: "PREFER + INFINITIVE", pattern: "prefer + infinitive + rather than + base verb", key: "infinitive"},
+  {name: "WOULD PREFER + INFINITIVE", pattern: "would prefer + infinitive + rather than + base verb", key: "wouldPreferInf"},
+  {name: "WOULD PREFER + GERUND", pattern: "would prefer + gerund + to + gerund (разговорно)", key: "wouldPreferGer"},
+  {name: "WOULD RATHER + BASE VERB", pattern: "would rather + base verb + than + base verb", key: "wouldRather"}
+];
+
+const dilemmas = [
+  {
+    a: "Launch a bold, risky campaign",
+    b: "play it safe with a predictable one",
+    model: {
+      noun: "I prefer a bold, risky campaign to a safe, predictable one.",
+      gerund: "I prefer launching bold, risky campaigns to playing it safe.",
+      infinitive: "I prefer to launch bold, risky campaigns rather than play it safe.",
+      wouldPreferInf: "For this launch, I would prefer to take a bold risk rather than play it safe.",
+      wouldPreferGer: "For this launch, I'd prefer taking a bold risk to playing it safe.",
+      wouldRather: "I would rather launch something bold and risky than play it safe."
+    }
+  },
+  {
+    a: "Lead with data and analytics",
+    b: "lead with creative instinct",
+    model: {
+      noun: "I prefer data and analytics to pure creative instinct.",
+      gerund: "I prefer leading with data to leading with pure instinct.",
+      infinitive: "I prefer to lead with data rather than rely on instinct alone.",
+      wouldPreferInf: "I would prefer to base this decision on data rather than rely on instinct alone.",
+      wouldPreferGer: "I'd prefer basing this decision on data to relying on instinct alone.",
+      wouldRather: "I would rather lead with data than rely purely on instinct."
+    }
+  },
+  {
+    a: "Protect long-term brand loyalty",
+    b: "chase fast brand awareness",
+    model: {
+      noun: "I prefer long-term brand loyalty to fast brand awareness.",
+      gerund: "I prefer protecting brand loyalty to chasing fast awareness.",
+      infinitive: "I prefer to protect brand loyalty rather than chase fast awareness.",
+      wouldPreferInf: "I would prefer to protect brand loyalty rather than chase a short-term awareness spike.",
+      wouldPreferGer: "I'd prefer protecting brand loyalty to chasing a short-term awareness spike.",
+      wouldRather: "I would rather protect our brand loyalty than chase fast awareness."
+    }
+  },
+  {
+    a: "Manage a large team with more resources",
+    b: "manage a small, elite team",
+    model: {
+      noun: "I prefer a small, elite team to a large one.",
+      gerund: "I prefer managing small, elite teams to managing large ones.",
+      infinitive: "I prefer to manage a small team rather than a large one.",
+      wouldPreferInf: "For this project, I would prefer to manage a small team rather than a large one.",
+      wouldPreferGer: "For this project, I'd prefer managing a small team to managing a large one.",
+      wouldRather: "I would rather manage a small, elite team than a large one."
+    }
+  },
+  {
+    a: "Focus on short-term sales results",
+    b: "focus on long-term brand building",
+    model: {
+      noun: "I prefer long-term brand building to short-term sales results.",
+      gerund: "I prefer focusing on long-term brand building to chasing short-term sales.",
+      infinitive: "I prefer to focus on long-term brand building rather than chase short-term sales.",
+      wouldPreferInf: "I would prefer to focus on long-term brand building rather than chase short-term sales.",
+      wouldPreferGer: "I'd prefer focusing on long-term brand building to chasing short-term sales.",
+      wouldRather: "I would rather focus on long-term brand building than chase short-term sales."
+    }
+  },
+  {
+    a: "Launch globally all at once",
+    b: "test the campaign in one market first",
+    model: {
+      noun: "I prefer a single test market to a global launch.",
+      gerund: "I prefer testing a campaign in one market to launching everywhere at once.",
+      infinitive: "I prefer to test a campaign in one market rather than launch everywhere at once.",
+      wouldPreferInf: "I would prefer to test this in one market first rather than launch globally at once.",
+      wouldPreferGer: "I'd prefer testing this in one market first to launching globally at once.",
+      wouldRather: "I would rather test it in one market first than launch everywhere at once."
+    }
+  },
+  {
+    a: "Work with a demanding but visionary client",
+    b: "work with an easy-going but unambitious one",
+    model: {
+      noun: "I prefer a demanding, visionary client to an easy, unambitious one.",
+      gerund: "I prefer working with demanding, visionary clients to working with easy, unambitious ones.",
+      infinitive: "I prefer to work with a demanding, visionary client rather than an unambitious one.",
+      wouldPreferInf: "I would prefer to work with a demanding, visionary client rather than an unambitious one.",
+      wouldPreferGer: "I'd prefer working with a demanding, visionary client to working with an unambitious one.",
+      wouldRather: "I would rather work with a demanding, visionary client than an easy, unambitious one."
+    }
+  },
+  {
+    a: "Have full creative freedom with a smaller budget",
+    b: "have limited freedom with a huge budget",
+    model: {
+      noun: "I prefer full creative freedom to a huge, restrictive budget.",
+      gerund: "I prefer having full creative freedom to having a huge, restrictive budget.",
+      infinitive: "I prefer to have full creative freedom rather than work with a huge but restrictive budget.",
+      wouldPreferInf: "I would prefer to have full creative freedom rather than work with a huge but restrictive budget.",
+      wouldPreferGer: "I'd prefer having full creative freedom to having a huge, restrictive budget.",
+      wouldRather: "I would rather have full creative freedom than a huge, restrictive budget."
+    }
+  },
+  {
+    a: "Handle a PR crisis publicly and transparently",
+    b: "handle it quietly, behind the scenes",
+    model: {
+      noun: "I prefer a public, transparent response to a quiet, behind-the-scenes one.",
+      gerund: "I prefer handling a crisis publicly to handling it quietly behind the scenes.",
+      infinitive: "I prefer to handle a crisis publicly rather than quietly behind the scenes.",
+      wouldPreferInf: "I would prefer to handle this crisis publicly rather than quietly behind the scenes.",
+      wouldPreferGer: "I'd prefer handling this crisis publicly to handling it quietly behind the scenes.",
+      wouldRather: "I would rather handle this crisis publicly than quietly behind the scenes."
+    }
+  },
+  {
+    a: "Build a campaign around influencer marketing",
+    b: "build it around traditional advertising",
+    model: {
+      noun: "I prefer influencer marketing to traditional advertising.",
+      gerund: "I prefer building campaigns around influencers to relying on traditional advertising.",
+      infinitive: "I prefer to build campaigns around influencers rather than rely on traditional ads.",
+      wouldPreferInf: "For this campaign, I would prefer to use influencer marketing rather than rely on traditional ads.",
+      wouldPreferGer: "For this campaign, I'd prefer using influencer marketing to relying on traditional ads.",
+      wouldRather: "I would rather build this campaign around influencers than traditional advertising."
+    }
+  },
+  {
+    a: "Take a high-pressure, high-visibility role",
+    b: "take a stable, low-profile role",
+    model: {
+      noun: "I prefer a high-visibility role to a stable, low-profile one.",
+      gerund: "I prefer taking high-visibility roles to staying in low-profile, stable ones.",
+      infinitive: "I prefer to take a high-visibility role rather than stay in a stable, low-profile one.",
+      wouldPreferInf: "At this point in my career, I would prefer to take a high-visibility role rather than stay in a stable, low-profile one.",
+      wouldPreferGer: "At this point, I'd prefer taking a high-visibility role to staying in a stable, low-profile one.",
+      wouldRather: "I would rather take a high-pressure, high-visibility role than a stable, low-profile one."
+    }
+  },
+  {
+    a: "Grow the team quickly",
+    b: "grow it slowly, hiring very selectively",
+    model: {
+      noun: "I prefer slow, selective hiring to rapid team growth.",
+      gerund: "I prefer growing a team slowly and selectively to growing it quickly.",
+      infinitive: "I prefer to grow this team slowly and selectively rather than hire too quickly.",
+      wouldPreferInf: "I would prefer to grow this team slowly and selectively rather than hire too quickly.",
+      wouldPreferGer: "I'd prefer growing this team slowly to hiring too quickly.",
+      wouldRather: "I would rather grow this team slowly than hire too quickly."
+    }
+  }
+];
+
+let usedDilemmas = [];
+let currentDilemma = null;
+let currentStructure = null;
+
+function pickRandom(arr, used) {
+  if (used.length >= arr.length) used.length = 0;
+  let idx;
+  do { idx = Math.floor(Math.random() * arr.length); } while (used.includes(idx));
+  used.push(idx);
+  return arr[idx];
+}
+
+function startGame() {
+  document.getElementById('rulesPanel').style.display = 'none';
+  document.getElementById('gamePanel').style.display = 'block';
+  nextRound();
+}
+
+function nextRound() {
+  document.getElementById('revealBox').style.display = 'none';
+
+  currentStructure = structures[Math.floor(Math.random() * structures.length)];
+  document.getElementById('structureBadge').textContent = currentStructure.name;
+  document.getElementById('structurePattern').textContent = currentStructure.pattern;
+
+  const dIdx = Math.floor(Math.random() * dilemmas.length);
+  currentDilemma = dilemmas[dIdx];
+  document.getElementById('optionA').textContent = "A) " + currentDilemma.a;
+  document.getElementById('optionB').textContent = "B) " + currentDilemma.b;
+}
+
+function showModel() {
+  document.getElementById('modelAnswer').textContent = currentDilemma.model[currentStructure.key];
+  document.getElementById('revealBox').style.display = 'block';
+}
+</script>
+</body>
+</html>
